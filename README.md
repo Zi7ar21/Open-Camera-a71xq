@@ -1,2 +1,2 @@
-# Open-Camera-a71xq
-A modified version of Open Camera made for the Samsung Galaxy A71 5G (a71xq).
+# Open Camera a71xq
+This repository contains a modified version of [Open camera](https://opencamera.org.uk/) optimised for the [Samsung Galaxy A71 5G (a71xq)](https://www.samsung.com/us/mobile/galaxy-a71-5g/).
