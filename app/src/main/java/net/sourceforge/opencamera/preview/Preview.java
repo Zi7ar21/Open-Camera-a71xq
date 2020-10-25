@@ -103,6 +103,7 @@ import android.widget.Toast;
  *  the rest of the application is available through ApplicationInterface.
  *  We could probably do with decoupling this class into separate components!
  */
+
 public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextureListener {
     private static final String TAG = "Preview";
 
@@ -2086,7 +2087,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
             this.max_iso = camera_features.max_iso;
             this.supports_exposure_time = camera_features.supports_exposure_time;
             this.min_exposure_time = camera_features.min_exposure_time;
-            this.max_exposure_time = 1000000000L*10;
+            this.max_exposure_time = 1000000000L*30;
             this.min_exposure = camera_features.min_exposure;
             this.max_exposure = camera_features.max_exposure;
             this.exposure_step = camera_features.exposure_step;
