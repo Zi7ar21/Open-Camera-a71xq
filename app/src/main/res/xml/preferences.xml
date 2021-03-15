@@ -101,7 +101,7 @@
             android:summary="%s"
             android:entries="@array/preference_burst_interval_entries"
             android:entryValues="@array/preference_burst_interval_values"
-            android:defaultValue="1"
+            android:defaultValue="0"
             />
 
         <PreferenceScreen
@@ -132,14 +132,14 @@
                 android:key="preference_shutter_sound"
                 android:title="@string/preference_shutter_sound"
                 android:summary="@string/preference_shutter_sound_summary"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 />
     
             <SwitchPreference
                 android:key="preference_timer_beep"
                 android:title="@string/preference_timer_beep"
                 android:summary="@string/preference_timer_beep_summary"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 />
     
             <SwitchPreference
@@ -168,7 +168,7 @@
                 android:defaultValue="none"
                 />
 
-            <ListPreference 
+            <net.sourceforge.opencamera.ui.ArraySeekBarPreference
                 android:key="preference_audio_noise_control_sensitivity"
                 android:title="@string/preference_audio_noise_control_sensitivity"
                 android:summary="@string/preference_audio_noise_control_sensitivity_summary"
@@ -600,7 +600,7 @@
                 android:title="@string/preference_show_cycle_flash"
                 android:summary="@string/preference_show_cycle_flash_summary"
                 android:icon="@drawable/flash_on"
-                android:defaultValue="false"
+                android:defaultValue="true"
                 />
 
             <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->
@@ -667,7 +667,7 @@
                 android:key="preference_show_zoom_controls"
                 android:title="@string/preference_show_zoom_controls"
                 android:summary="@string/preference_show_zoom_controls_summary"
-                android:defaultValue="false"
+                android:defaultValue="true"
                 />
         
             <CheckBoxPreference
@@ -717,7 +717,7 @@
                 android:key="preference_max_brightness"
                 android:title="@string/preference_max_brightness"
                 android:summary="@string/preference_max_brightness_summary"
-                android:defaultValue="false"
+                android:defaultValue="true"
                 />
 
         </PreferenceScreen>
@@ -741,12 +741,12 @@
                 android:summary="%s"
                 android:icon="@drawable/ic_photo_size_select_large_white_48dp"
                 />
-        
-            <ListPreference 
+
+            <net.sourceforge.opencamera.ui.ArraySeekBarPreference
                 android:key="preference_quality"
                 android:title="@string/preference_quality"
                 android:summary="@string/preference_quality_summary"
-                android:defaultValue="95"
+                android:defaultValue="100"
                 />
 
             <ListPreference
@@ -755,7 +755,7 @@
                 android:summary="@string/preference_image_format_summary"
                 android:entries="@array/preference_image_format_entries"
                 android:entryValues="@array/preference_image_format_values"
-                android:defaultValue="preference_image_format_jpeg"
+                android:defaultValue="preference_image_format_png"
                 />
 
             <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->
@@ -830,7 +830,7 @@
                 android:summary="@string/preference_expo_bracketing_stops_summary"
                 android:entries="@array/preference_expo_bracketing_stops_entries"
                 android:entryValues="@array/preference_expo_bracketing_stops_values"
-                android:defaultValue="3"
+                android:defaultValue="1"
                 />
 
             <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->
@@ -962,8 +962,8 @@
                     android:inputType="text"
                     android:defaultValue=""
                     />
-    
-                <ListPreference 
+
+                <net.sourceforge.opencamera.ui.ArraySeekBarPreference
                     android:key="preference_stamp_fontsize"
                     android:title="@string/preference_stamp_fontsize"
                     android:summary="@string/preference_stamp_fontsize_summary"
@@ -1011,7 +1011,7 @@
                     android:key="preference_camera2_fast_burst"
                     android:title="@string/preference_camera2_fast_burst"
                     android:summary="@string/preference_camera2_fast_burst_summary"
-                    android:defaultValue="false"
+                    android:defaultValue="true"
                     />
 
                 <!--  if we move this to another PreferenceGroup, we should update code to remove this Preference -->
@@ -1072,7 +1072,7 @@
                 android:summary="@string/preference_video_log_summary"
                 android:entries="@array/preference_video_log_entries"
                 android:entryValues="@array/preference_video_log_values"
-                android:defaultValue="off"
+                android:defaultValue="gamma"
                 />
 
             <!--  if we move this to another PreferenceGroup, we should update code for the findPreference() call -->
@@ -1325,12 +1325,6 @@
                 android:key="preference_licence_open_camera"
                 android:title="@string/preference_licence_open_camera"
                 android:summary="@string/preference_licence_open_camera_text"
-                />
-
-            <Preference
-                android:key="preference_mod_info"
-                android:title="@string/preference_mod_info"
-                android:summary="@string/preference_mod_info_text"
                 />
 
             <Preference

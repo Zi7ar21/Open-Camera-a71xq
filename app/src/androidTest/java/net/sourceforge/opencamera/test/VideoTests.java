@@ -14,6 +14,7 @@ public class VideoTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoSAF"));
         if( !MainActivityTest.test_camera2 ) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoSubtitles"));
+            suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoSubtitlesSAF"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoSubtitlesGPS"));
         }
 
@@ -58,6 +59,9 @@ public class VideoTests {
         }
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoTimeLapse"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoForceFailure"));
+        suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoForceFailureSAF"));
+        suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoForceIOException"));
+        suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTakeVideoForceCameraControllerException"));
         if( MainActivityTest.test_camera2 ) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testVideoLogProfile"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testVideoJTLogProfile"));

@@ -15,6 +15,8 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.TextureView;
 
+import androidx.annotation.NonNull;
+
 /** CameraController is an abstract class that wraps up the access/control to
  *  the Android camera, so that the rest of the application doesn't have to
  *  deal directly with the Android camera API. It also allows us to support
@@ -38,9 +40,9 @@ public abstract class CameraController {
     public static final String ISO_DEFAULT = "auto";
     public static final long EXPOSURE_TIME_DEFAULT = 1000000000L/30; // note, responsibility of callers to check that this is within the valid min/max range
 
-    public static final int ISO_FOR_DARK = 3200;
-    public static final int N_IMAGES_NR_DARK = 16;
-    public static final int N_IMAGES_NR_DARK_LOW_LIGHT = 32;
+    public static final int ISO_FOR_DARK = 800;
+    public static final int N_IMAGES_NR_DARK = 30;
+    public static final int N_IMAGES_NR_DARK_LOW_LIGHT = 30;
 
     // for testing:
     volatile int count_camera_parameters_exception;
@@ -203,6 +205,7 @@ public abstract class CameraController {
             return width*41 + height;
         }
 
+        @NonNull
         public String toString() {
             StringBuilder s = new StringBuilder();
             for (int[] f : this.fps_ranges) {
@@ -531,7 +534,7 @@ public abstract class CameraController {
         // dummy implementation
     }
     /** Starts the camera preview.
-     *  throws CameraControllerException if the camera preview fails to start.
+     *  @throws CameraControllerException if the camera preview fails to start.
      */
     public abstract void startPreview() throws CameraControllerException;
     public abstract void stopPreview();
