@@ -1,48 +1,12 @@
 package net.sourceforge.opencamera.test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import net.sourceforge.opencamera.LocationSupplier;
-import net.sourceforge.opencamera.MyPreferenceFragment;
-import net.sourceforge.opencamera.PanoramaProcessorException;
-import net.sourceforge.opencamera.cameracontroller.CameraController2;
-import net.sourceforge.opencamera.HDRProcessor;
-import net.sourceforge.opencamera.HDRProcessorException;
-import net.sourceforge.opencamera.ImageSaver;
-import net.sourceforge.opencamera.MainActivity;
-import net.sourceforge.opencamera.MyApplicationInterface;
-import net.sourceforge.opencamera.PreferenceKeys;
-import net.sourceforge.opencamera.preview.ApplicationInterface;
-import net.sourceforge.opencamera.preview.VideoProfile;
-import net.sourceforge.opencamera.SaveLocationHistory;
-import net.sourceforge.opencamera.cameracontroller.CameraController;
-import net.sourceforge.opencamera.preview.Preview;
-import net.sourceforge.opencamera.ui.FolderChooserDialog;
-import net.sourceforge.opencamera.ui.PopupView;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.content.SharedPreferences;
-//import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-//import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
@@ -52,17 +16,14 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.TonemapCurve;
 import android.location.Location;
 import android.media.CamcorderProfile;
-import androidx.exifinterface.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-//import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.renderscript.Allocation;
-import androidx.annotation.RequiresApi;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.TouchUtils;
 import android.util.Log;
@@ -74,14 +35,58 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ZoomControls;
 
+import androidx.annotation.RequiresApi;
+import androidx.exifinterface.media.ExifInterface;
+
+import net.sourceforge.opencamera.HDRProcessor;
+import net.sourceforge.opencamera.HDRProcessorException;
+import net.sourceforge.opencamera.ImageSaver;
+import net.sourceforge.opencamera.LocationSupplier;
+import net.sourceforge.opencamera.MainActivity;
+import net.sourceforge.opencamera.MyApplicationInterface;
+import net.sourceforge.opencamera.MyPreferenceFragment;
+import net.sourceforge.opencamera.PanoramaProcessorException;
+import net.sourceforge.opencamera.PreferenceKeys;
+import net.sourceforge.opencamera.SaveLocationHistory;
+import net.sourceforge.opencamera.cameracontroller.CameraController;
+import net.sourceforge.opencamera.cameracontroller.CameraController2;
+import net.sourceforge.opencamera.preview.ApplicationInterface;
+import net.sourceforge.opencamera.preview.Preview;
+import net.sourceforge.opencamera.preview.VideoProfile;
+import net.sourceforge.opencamera.ui.FolderChooserDialog;
+import net.sourceforge.opencamera.ui.PopupView;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+//import android.content.res.AssetManager;
+//import android.graphics.BitmapFactory;
+//import android.os.Environment;
+
 // ignore warning about "Call to Thread.sleep in a loop", this is only test code
 @SuppressWarnings("BusyWait")
 public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActivity> {
+    public static final boolean test_camera2 = false;
     private static final String TAG = "MainActivityTest";
+    final private String hdr_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/hdrsamples/";
+    final private String avg_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/avgsamples/";
+    //public static final boolean test_camera2 = true;
+    final private String logprofile_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/logprofilesamples/";
+    final private String panorama_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/panoramasamples/";
     private MainActivity mActivity = null;
     private Preview mPreview = null;
-    public static final boolean test_camera2 = false;
-    //public static final boolean test_camera2 = true;
 
     public MainActivityTest() {
         //noinspection deprecation
@@ -115,7 +120,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this.getInstrumentation().getTargetContext());
         SharedPreferences.Editor editor = settings.edit();
         editor.clear();
-        if( test_camera2 ) {
+        if (test_camera2) {
             MainActivity.test_force_supports_camera2 = true;
             //editor.putBoolean(PreferenceKeys.UseCamera2PreferenceKey, true);
             editor.putString(PreferenceKeys.CameraAPIPreferenceKey, "preference_camera_api_camera2");
@@ -175,8 +180,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void waitUntilCameraOpened() {
         Log.d(TAG, "wait until camera opened");
         long time_s = System.currentTimeMillis();
-        while( !mPreview.openCameraAttempted() ) {
-            assertTrue( System.currentTimeMillis() - time_s < 20000 );
+        while (!mPreview.openCameraAttempted()) {
+            assertTrue(System.currentTimeMillis() - time_s < 20000);
         }
         Log.d(TAG, "camera is open!");
         this.getInstrumentation().waitForIdleSync(); // allow the onPostExecute of open camera task run
@@ -188,9 +193,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    /** Restarts Open Camera.
-     *  WARNING: Make sure that any assigned variables related to the activity, e.g., anything
-     *  returned by findViewById(), is updated to the new mActivity after calling this method!
+    /**
+     * Restarts Open Camera.
+     * WARNING: Make sure that any assigned variables related to the activity, e.g., anything
+     * returned by findViewById(), is updated to the new mActivity after calling this method!
      */
     private void restart() {
         Log.d(TAG, "restart");
@@ -231,7 +237,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         });
         // need to wait for UI code to finish before leaving
         this.getInstrumentation().waitForIdleSync();
-        if( wait_until_camera_opened ) {
+        if (wait_until_camera_opened) {
             waitUntilCameraOpened();
         }
     }
@@ -254,7 +260,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void clickView(final View view) {
         // TouchUtils.clickView doesn't work properly if phone held in portrait mode!
         //TouchUtils.clickView(MainActivityTest.this, view);
-        Log.d(TAG, "clickView: "+ view);
+        Log.d(TAG, "clickView: " + view);
         assertEquals(view.getVisibility(), View.VISIBLE);
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
@@ -267,31 +273,31 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     private void switchToCamera(int cameraId) {
         int origCameraId = mPreview.getCameraId();
-        Log.d(TAG, "switchToCamera: "+ cameraId);
-        Log.d(TAG, "origCameraId: "+ origCameraId);
+        Log.d(TAG, "switchToCamera: " + cameraId);
+        Log.d(TAG, "origCameraId: " + origCameraId);
         int newCameraId = origCameraId;
-        while( newCameraId != cameraId ) {
+        while (newCameraId != cameraId) {
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
             this.getInstrumentation().waitForIdleSync();
             waitUntilCameraOpened();
             newCameraId = mPreview.getCameraId();
-            Log.d(TAG, "changed cameraId to: "+ newCameraId);
+            Log.d(TAG, "changed cameraId to: " + newCameraId);
             assertTrue(newCameraId != origCameraId);
         }
     }
 
     private void switchToFlashValue(String required_flash_value) {
-        if( mPreview.supportsFlash() ) {
+        if (mPreview.supportsFlash()) {
             String flash_value = mPreview.getCurrentFlashValue();
-            Log.d(TAG, "start flash_value: "+ flash_value);
-            Log.d(TAG, "required_flash_value: "+ required_flash_value);
-            if( !flash_value.equals(required_flash_value) ) {
-                assertFalse( mActivity.popupIsOpen() );
+            Log.d(TAG, "start flash_value: " + flash_value);
+            Log.d(TAG, "required_flash_value: " + required_flash_value);
+            if (!flash_value.equals(required_flash_value)) {
+                assertFalse(mActivity.popupIsOpen());
                 View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
                 clickView(popupButton);
                 Log.d(TAG, "wait for popup to open");
-                while( !mActivity.popupIsOpen() ) {
+                while (!mActivity.popupIsOpen()) {
                 }
                 Log.d(TAG, "popup is now open");
                 View currentFlashButton = mActivity.getUIButton("TEST_FLASH_" + flash_value);
@@ -302,56 +308,55 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertEquals(flashButton.getAlpha(), PopupView.ALPHA_BUTTON, 1.0e-5);
                 clickView(flashButton);
                 flash_value = mPreview.getCurrentFlashValue();
-                Log.d(TAG, "changed flash_value to: "+ flash_value);
+                Log.d(TAG, "changed flash_value to: " + flash_value);
             }
             assertEquals(flash_value, required_flash_value);
             String controller_flash_value = mPreview.getCameraController().getFlashValue();
-            Log.d(TAG, "controller_flash_value: "+ controller_flash_value);
-            if( flash_value.equals("flash_frontscreen_auto") || flash_value.equals("flash_frontscreen_on") ) {
+            Log.d(TAG, "controller_flash_value: " + controller_flash_value);
+            if (flash_value.equals("flash_frontscreen_auto") || flash_value.equals("flash_frontscreen_on")) {
                 // for frontscreen flash, the controller flash value will be "" (due to real flash not supported) - although on Galaxy Nexus this is "flash_off" due to parameters.getFlashMode() returning Camera.Parameters.FLASH_MODE_OFF
                 assertTrue(controller_flash_value.equals("") || controller_flash_value.equals("flash_off"));
-            }
-            else {
-                Log.d(TAG, "expected_flash_value: "+ flash_value);
+            } else {
+                Log.d(TAG, "expected_flash_value: " + flash_value);
                 assertEquals(flash_value, controller_flash_value);
             }
         }
     }
 
     private void switchToFocusValue(String required_focus_value) {
-        Log.d(TAG, "switchToFocusValue: "+ required_focus_value);
-        if( mPreview.supportsFocus() ) {
+        Log.d(TAG, "switchToFocusValue: " + required_focus_value);
+        if (mPreview.supportsFocus()) {
             String focus_value = mPreview.getCurrentFocusValue();
-            Log.d(TAG, "start focus_value: "+ focus_value);
-            if( !focus_value.equals(required_focus_value) ) {
-                assertFalse( mActivity.popupIsOpen() );
+            Log.d(TAG, "start focus_value: " + focus_value);
+            if (!focus_value.equals(required_focus_value)) {
+                assertFalse(mActivity.popupIsOpen());
                 View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
                 clickView(popupButton);
-                while( !mActivity.popupIsOpen() ) {
+                while (!mActivity.popupIsOpen()) {
                 }
                 View focusButton = mActivity.getUIButton("TEST_FOCUS_" + required_focus_value);
                 assertNotNull(focusButton);
                 clickView(focusButton);
                 focus_value = mPreview.getCurrentFocusValue();
-                Log.d(TAG, "changed focus_value to: "+ focus_value);
+                Log.d(TAG, "changed focus_value to: " + focus_value);
             }
             assertEquals(focus_value, required_focus_value);
             String actual_focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "actual_focus_value: "+ actual_focus_value);
+            Log.d(TAG, "actual_focus_value: " + actual_focus_value);
             String compare_focus_value = focus_value;
-            if( compare_focus_value.equals("focus_mode_locked") )
+            if (compare_focus_value.equals("focus_mode_locked"))
                 compare_focus_value = "focus_mode_auto";
-            else if( compare_focus_value.equals("focus_mode_infinity") && mPreview.usingCamera2API() )
+            else if (compare_focus_value.equals("focus_mode_infinity") && mPreview.usingCamera2API())
                 compare_focus_value = "focus_mode_manual2";
             assertEquals(compare_focus_value, actual_focus_value);
         }
     }
 
     private void switchToISO(int required_iso) {
-        Log.d(TAG, "switchToISO: "+ required_iso);
+        Log.d(TAG, "switchToISO: " + required_iso);
         int iso = mPreview.getCameraController().getISO();
-        Log.d(TAG, "start iso: "+ iso);
-        if( iso != required_iso ) {
+        Log.d(TAG, "start iso: " + iso);
+        if (iso != required_iso) {
             /*assertFalse( mActivity.popupIsOpen() );
             View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
             clickView(popupButton);
@@ -371,7 +376,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertNotNull(isoButton);
             clickView(isoButton);
             iso = mPreview.getCameraController().getISO();
-            Log.d(TAG, "changed iso to: "+ iso);
+            Log.d(TAG, "changed iso to: " + iso);
             clickView(exposureButton);
             assertEquals(exposureContainer.getVisibility(), View.GONE);
         }
@@ -388,7 +393,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void setToDefault() {
         waitUntilCameraOpened();
 
-        if( mPreview.isVideo() ) {
+        if (mPreview.isVideo()) {
             Log.d(TAG, "turn off video mode");
             View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
             clickView(switchVideoButton);
@@ -396,7 +401,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
         assertFalse(mPreview.isVideo());
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             switchToCamera(0);
         }
 
@@ -406,8 +411,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // testLocationOff result in hang whilst waiting for photo to be taken, and hit the timeout in waitForTakePhoto()
         try {
             Thread.sleep(200);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -455,13 +459,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mPreview.test_ticker_called);
     }
 
-    /** Tests that we clean up the background task for opening camera properly.
+    /**
+     * Tests that we clean up the background task for opening camera properly.
      */
     public void testImmediatelyQuit() throws InterruptedException {
         Log.d(TAG, "testImmediatelyQuit");
         setToDefault();
 
-        for(int i=0;i<5;i++) {
+        for (int i = 0; i < 5; i++) {
             // like restart, but don't wait for camera to be opened
             Log.d(TAG, "call finish");
             mActivity.finish();
@@ -554,13 +559,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
      */
     private String getNonDefaultFocus() {
         String non_default_focus;
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_macro") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_macro")) {
             non_default_focus = "focus_mode_macro";
-        }
-        else if( mPreview.getSupportedFocusValues().contains("focus_mode_infinity") ) {
+        } else if (mPreview.getSupportedFocusValues().contains("focus_mode_infinity")) {
             non_default_focus = "focus_mode_infinity";
-        }
-        else {
+        } else {
             non_default_focus = null;
             fail("can't choose a non-default focus for this device");
         }
@@ -572,7 +575,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
      */
     private void subTestSaveFocusMode() {
         Log.d(TAG, "subTestSaveFocusMode");
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -601,7 +604,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             Log.d(TAG, "doesn't support flash");
             return;
         }
@@ -618,10 +621,50 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals("flash_torch", flash_value);
     }
 
+    /* Ensures that we save the flash mode torch when switching to front camera and then to back
+     * Note that this sometimes fail on Galaxy Nexus, because flash turns off after autofocus (and other camera apps do this too), but this only seems to happen some of the time!
+     * And Nexus 7 has no flash anyway.
+     * So commented out test for now.
+     */
+    /*public void testSaveFlashTorchSwitchCamera() {
+        Log.d(TAG, "testSaveFlashTorchSwitchCamera");
+
+        setToDefault();
+
+        if( !mPreview.supportsFlash() ) {
+            return;
+        }
+        else if( Camera.getNumberOfCameras() <= 1 ) {
+            return;
+        }
+
+        switchToFlashValue("flash_torch");
+
+        int cameraId = mPreview.getCameraId();
+        View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
+        clickView(switchCameraButton);
+        waitUntilCameraOpened();
+        int new_cameraId = mPreview.getCameraId();
+        assertTrue(cameraId != new_cameraId);
+
+        clickView(switchCameraButton);
+        waitUntilCameraOpened();
+        new_cameraId = mPreview.getCameraId();
+        assertTrue(cameraId == new_cameraId);
+
+        Camera camera = mPreview.getCamera();
+        Camera.Parameters parameters = camera.getParameters();
+        Log.d(TAG, "parameters flash mode: " + parameters.getFlashMode());
+        assertTrue(parameters.getFlashMode().equals(Camera.Parameters.FLASH_MODE_TORCH));
+        String flash_value = mPreview.getCurrentFlashValue();
+        Log.d(TAG, "flash_value: " + flash_value);
+        assertTrue(flash_value.equals("flash_torch"));
+    }*/
+
     private void subTestExposureLockNotSaved() {
         Log.d(TAG, "subTestExposureLockNotSaved");
 
-        if( !mPreview.supportsExposureLock() ) {
+        if (!mPreview.supportsExposureLock()) {
             return;
         }
 
@@ -652,7 +695,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void subTestWhiteBalanceLockNotSaved() {
         Log.d(TAG, "subTestWhiteBalanceLockNotSaved");
 
-        if( !mPreview.supportsWhiteBalanceLock() ) {
+        if (!mPreview.supportsWhiteBalanceLock()) {
             return;
         }
 
@@ -689,7 +732,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(whiteBalanceLockButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.white_balance_lock));
     }
 
-    /** Tests for things which should (or shouldn't) be saved.
+    /**
+     * Tests for things which should (or shouldn't) be saved.
      */
     public void testSaveModes() throws InterruptedException {
         Log.d(TAG, "testSaveModes");
@@ -706,7 +750,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testFlashVideoMode");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -759,51 +803,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals("flash_torch", mPreview.getCurrentFlashValue());
     }
 
-    /* Ensures that we save the flash mode torch when switching to front camera and then to back
-     * Note that this sometimes fail on Galaxy Nexus, because flash turns off after autofocus (and other camera apps do this too), but this only seems to happen some of the time!
-     * And Nexus 7 has no flash anyway.
-     * So commented out test for now.
-     */
-    /*public void testSaveFlashTorchSwitchCamera() {
-        Log.d(TAG, "testSaveFlashTorchSwitchCamera");
-
-        setToDefault();
-
-        if( !mPreview.supportsFlash() ) {
-            return;
-        }
-        else if( Camera.getNumberOfCameras() <= 1 ) {
-            return;
-        }
-
-        switchToFlashValue("flash_torch");
-
-        int cameraId = mPreview.getCameraId();
-        View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
-        clickView(switchCameraButton);
-        waitUntilCameraOpened();
-        int new_cameraId = mPreview.getCameraId();
-        assertTrue(cameraId != new_cameraId);
-
-        clickView(switchCameraButton);
-        waitUntilCameraOpened();
-        new_cameraId = mPreview.getCameraId();
-        assertTrue(cameraId == new_cameraId);
-
-        Camera camera = mPreview.getCamera();
-        Camera.Parameters parameters = camera.getParameters();
-        Log.d(TAG, "parameters flash mode: " + parameters.getFlashMode());
-        assertTrue(parameters.getFlashMode().equals(Camera.Parameters.FLASH_MODE_TORCH));
-        String flash_value = mPreview.getCurrentFlashValue();
-        Log.d(TAG, "flash_value: " + flash_value);
-        assertTrue(flash_value.equals("flash_torch"));
-    }*/
-
     public void testFlashStartup() throws InterruptedException {
         Log.d(TAG, "testFlashStartup");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -836,13 +840,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(camera_flash_value, flash_value);
     }
 
-    /** Tests that flash remains on, with the startup focus flash hack.
+    /**
+     * Tests that flash remains on, with the startup focus flash hack.
      */
     public void testFlashStartup2() throws InterruptedException {
         Log.d(TAG, "testFlashStartup2");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -885,14 +890,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void checkSquareAspectRatio() {
         Log.d(TAG, "preview size: " + mPreview.getCameraController().getPreviewSize().width + ", " + mPreview.getCameraController().getPreviewSize().height);
         Log.d(TAG, "frame size: " + mPreview.getView().getWidth() + ", " + mPreview.getView().getHeight());
-        double frame_aspect_ratio = ((double)mPreview.getView().getWidth()) / (double)mPreview.getView().getHeight();
-        double preview_aspect_ratio = ((double)mPreview.getCameraController().getPreviewSize().width) / (double)mPreview.getCameraController().getPreviewSize().height;
+        double frame_aspect_ratio = ((double) mPreview.getView().getWidth()) / (double) mPreview.getView().getHeight();
+        double preview_aspect_ratio = ((double) mPreview.getCameraController().getPreviewSize().width) / (double) mPreview.getCameraController().getPreviewSize().height;
         Log.d(TAG, "frame_aspect_ratio: " + frame_aspect_ratio);
         Log.d(TAG, "preview_aspect_ratio: " + preview_aspect_ratio);
         // we calculate etol like this, due to errors from rounding
         //double etol = 1.0f / Math.min((double)mPreview.getWidth(), (double)mPreview.getHeight()) + 1.0e-5;
-        double etol = (double)mPreview.getView().getWidth() / (double)(mPreview.getView().getHeight() * (mPreview.getView().getHeight()-1) ) + 1.0e-5;
-        assertTrue( Math.abs(frame_aspect_ratio - preview_aspect_ratio) <= etol );
+        double etol = (double) mPreview.getView().getWidth() / (double) (mPreview.getView().getHeight() * (mPreview.getView().getHeight() - 1)) + 1.0e-5;
+        assertTrue(Math.abs(frame_aspect_ratio - preview_aspect_ratio) <= etol);
     }
 
     /* Ensures that preview resolution is set as expected in non-WYSIWYG mode
@@ -915,14 +920,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
         //double targetRatio = mPreview.getTargetRatioForPreview(display_size);
         double targetRatio = mPreview.getTargetRatio();
-        double expTargetRatio = ((double)display_size.x) / (double)display_size.y;
+        double expTargetRatio = ((double) display_size.x) / (double) display_size.y;
         Log.d(TAG, "targetRatio: " + targetRatio);
         Log.d(TAG, "expTargetRatio: " + expTargetRatio);
-        assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
+        assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
         checkOptimalPreviewSize();
         checkSquareAspectRatio();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -932,7 +937,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             targetRatio = mPreview.getTargetRatio();
             Log.d(TAG, "targetRatio: " + targetRatio);
             Log.d(TAG, "expTargetRatio: " + expTargetRatio);
-            assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
+            assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
             checkOptimalPreviewSize();
             checkSquareAspectRatio();
         }
@@ -960,10 +965,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         CameraController.Size preview_size = mPreview.getCameraController().getPreviewSize();
         //double targetRatio = mPreview.getTargetRatioForPreview(display_size);
         double targetRatio = mPreview.getTargetRatio();
-        double expTargetRatio = ((double)picture_size.width) / (double)picture_size.height;
-        double previewRatio = ((double)preview_size.width) / (double)preview_size.height;
-        assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
-        assertTrue( Math.abs(previewRatio - expTargetRatio) <= 1.0e-5 );
+        double expTargetRatio = ((double) picture_size.width) / (double) picture_size.height;
+        double previewRatio = ((double) preview_size.width) / (double) preview_size.height;
+        assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
+        assertTrue(Math.abs(previewRatio - expTargetRatio) <= 1.0e-5);
         checkOptimalPreviewSize();
         checkSquareAspectRatio();
 
@@ -976,10 +981,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         CameraController.Size video_preview_size = mPreview.getCameraController().getPreviewSize();
         //targetRatio = mPreview.getTargetRatioForPreview(display_size);
         targetRatio = mPreview.getTargetRatio();
-        expTargetRatio = ((double)profile.videoFrameWidth) / (double)profile.videoFrameHeight;
-        previewRatio = ((double)video_preview_size.width) / (double)video_preview_size.height;
-        assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
-        assertTrue( Math.abs(previewRatio - expTargetRatio) <= 1.0e-5 );
+        expTargetRatio = ((double) profile.videoFrameWidth) / (double) profile.videoFrameHeight;
+        previewRatio = ((double) video_preview_size.width) / (double) video_preview_size.height;
+        assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
+        assertTrue(Math.abs(previewRatio - expTargetRatio) <= 1.0e-5);
         checkOptimalPreviewSize();
         checkSquareAspectRatio();
         checkOptimalVideoPictureSize(expTargetRatio);
@@ -996,7 +1001,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(new_picture_size, picture_size);
         assertEquals(new_preview_size, preview_size);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -1006,10 +1011,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             preview_size = mPreview.getCameraController().getPreviewSize();
             //targetRatio = mPreview.getTargetRatioForPreview(display_size);
             targetRatio = mPreview.getTargetRatio();
-            expTargetRatio = ((double)picture_size.width) / (double)picture_size.height;
-            previewRatio = ((double)preview_size.width) / (double)preview_size.height;
-            assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
-            assertTrue( Math.abs(previewRatio - expTargetRatio) <= 1.0e-5 );
+            expTargetRatio = ((double) picture_size.width) / (double) picture_size.height;
+            previewRatio = ((double) preview_size.width) / (double) preview_size.height;
+            assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
+            assertTrue(Math.abs(previewRatio - expTargetRatio) <= 1.0e-5);
             checkOptimalPreviewSize();
             checkSquareAspectRatio();
 
@@ -1021,10 +1026,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             video_preview_size = mPreview.getCameraController().getPreviewSize();
             //targetRatio = mPreview.getTargetRatioForPreview(display_size);
             targetRatio = mPreview.getTargetRatio();
-            expTargetRatio = ((double)profile.videoFrameWidth) / (double)profile.videoFrameHeight;
-            previewRatio = ((double)video_preview_size.width) / (double)video_preview_size.height;
-            assertTrue( Math.abs(targetRatio - expTargetRatio) <= 1.0e-5 );
-            assertTrue( Math.abs(previewRatio - expTargetRatio) <= 1.0e-5 );
+            expTargetRatio = ((double) profile.videoFrameWidth) / (double) profile.videoFrameHeight;
+            previewRatio = ((double) video_preview_size.width) / (double) video_preview_size.height;
+            assertTrue(Math.abs(targetRatio - expTargetRatio) <= 1.0e-5);
+            assertTrue(Math.abs(previewRatio - expTargetRatio) <= 1.0e-5);
             checkOptimalPreviewSize();
             checkSquareAspectRatio();
             checkOptimalVideoPictureSize(expTargetRatio);
@@ -1066,34 +1071,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         CameraController.Size new_size = mPreview.getCurrentPictureSize();
         Log.d(TAG, "new_size: " + new_size.width + " x " + new_size.height);
-        if( expect_reduce_resolution ) {
+        if (expect_reduce_resolution) {
             assertFalse(new_size.equals(std_size));
-            assertTrue(new_size.width*new_size.height <= max_mp);
-        }
-        else {
+            assertTrue(new_size.width * new_size.height <= max_mp);
+        } else {
             assertEquals(new_size, std_size);
         }
-        if( expect_supports_burst ) {
+        if (expect_supports_burst) {
             assertTrue(new_size.supports_burst);
         }
         final List<CameraController.Size> all_picture_sizes_new = new ArrayList<>(mPreview.getSupportedPictureSizes(false));
         final List<CameraController.Size> picture_sizes_new = new ArrayList<>(mPreview.getSupportedPictureSizes(true));
         assertEquals(all_picture_sizes, all_picture_sizes_new);
-        if( expect_reduce_resolution ) {
+        if (expect_reduce_resolution) {
             assertTrue(picture_sizes_new.size() < all_picture_sizes.size());
             // check the filtered modes are a subset of all of them
             assertTrue(all_picture_sizes.containsAll(picture_sizes_new));
             // check all of the filtered modes satisfy the max_mp
-            for(CameraController.Size size : picture_sizes_new) {
-                assertTrue(size.width*size.height <= max_mp);
+            for (CameraController.Size size : picture_sizes_new) {
+                assertTrue(size.width * size.height <= max_mp);
             }
-        }
-        else {
+        } else {
             assertEquals(all_picture_sizes, picture_sizes_new);
         }
-        if( expect_supports_burst ) {
+        if (expect_supports_burst) {
             // check all of the filtered modes support burst
-            for(CameraController.Size size : picture_sizes_new) {
+            for (CameraController.Size size : picture_sizes_new) {
                 assertTrue(size.supports_burst);
             }
         }
@@ -1112,15 +1115,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         CameraController.Size change_to_size = null;
         String settings_size = "";
-        if( test_change_resolution ) {
+        if (test_change_resolution) {
             // test changing the resolution in the new mode
 
             // save old resolution
             settings_size = settings.getString(PreferenceKeys.getResolutionPreferenceKey(mPreview.getCameraId()), "");
 
             // find a different resolution
-            for(CameraController.Size size : picture_sizes_new) {
-                if( !size.equals(new_size) ) {
+            for (CameraController.Size size : picture_sizes_new) {
+                if (!size.equals(new_size)) {
                     change_to_size = size;
                     break;
                 }
@@ -1147,10 +1150,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.Standard);
 
         new_size = mPreview.getCurrentPictureSize();
-        if( test_change_resolution ) {
+        if (test_change_resolution) {
             assertEquals(change_to_size, new_size);
-        }
-        else {
+        } else {
             assertEquals(std_size, new_size);
         }
         final List<CameraController.Size> all_picture_sizes2 = new ArrayList<>(mPreview.getSupportedPictureSizes(false));
@@ -1159,7 +1161,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(all_picture_sizes, std_picture_sizes2);
         assertTrue(std_picture_sizes2.contains(new_size));
 
-        if( test_change_resolution ) {
+        if (test_change_resolution) {
             // set back, so we don't confuse later parts of the test
             settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             editor = settings.edit();
@@ -1180,19 +1182,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(std_size);
         Log.d(TAG, "std_size: " + std_size.width + " x " + std_size.height);
 
-        int max_mp = (std_size.width*std_size.height-100);
+        int max_mp = (std_size.width * std_size.height - 100);
         mActivity.getApplicationInterface().test_max_mp = max_mp;
         Log.d(TAG, "test_max_mp: " + mActivity.getApplicationInterface().test_max_mp);
 
-        if( mActivity.supportsHDR() ) {
+        if (mActivity.supportsHDR()) {
             subTestResolutionMaxMP("preference_photo_mode_hdr", MyApplicationInterface.PhotoMode.HDR, max_mp, false, true, true);
             subTestResolutionMaxMP("preference_photo_mode_hdr", MyApplicationInterface.PhotoMode.HDR, max_mp, true, true, true);
         }
-        if( mActivity.supportsNoiseReduction() ) {
+        if (mActivity.supportsNoiseReduction()) {
             subTestResolutionMaxMP("preference_photo_mode_noise_reduction", MyApplicationInterface.PhotoMode.NoiseReduction, max_mp, false, true, true);
             subTestResolutionMaxMP("preference_photo_mode_noise_reduction", MyApplicationInterface.PhotoMode.NoiseReduction, max_mp, true, true, true);
         }
-        if( mActivity.supportsDRO() ) {
+        if (mActivity.supportsDRO()) {
             subTestResolutionMaxMP("preference_photo_mode_dro", MyApplicationInterface.PhotoMode.DRO, max_mp, false, false, false);
             subTestResolutionMaxMP("preference_photo_mode_dro", MyApplicationInterface.PhotoMode.DRO, max_mp, true, false, false);
         }
@@ -1203,7 +1205,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testResolutionBurst() {
         Log.d(TAG, "testResolutionBurst");
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             Log.d(TAG, "test requires camera2 api");
             return;
         }
@@ -1220,28 +1222,28 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // now find the maximum mp that supports burst
         final List<CameraController.Size> all_picture_sizes = new ArrayList<>(mPreview.getSupportedPictureSizes(false));
         int max_mp = 0;
-        for(CameraController.Size size : all_picture_sizes) {
-            if( size.supports_burst ) {
-                int mp = size.width*size.height;
+        for (CameraController.Size size : all_picture_sizes) {
+            if (size.supports_burst) {
+                int mp = size.width * size.height;
                 max_mp = Math.max(max_mp, mp);
             }
         }
         Log.d(TAG, "max_mp: " + max_mp);
-        assertTrue(max_mp < std_size.width*std_size.height);
+        assertTrue(max_mp < std_size.width * std_size.height);
 
-        if( mActivity.supportsHDR() ) {
+        if (mActivity.supportsHDR()) {
             subTestResolutionMaxMP("preference_photo_mode_hdr", MyApplicationInterface.PhotoMode.HDR, max_mp, false, true, true);
             subTestResolutionMaxMP("preference_photo_mode_hdr", MyApplicationInterface.PhotoMode.HDR, max_mp, true, true, true);
         }
-        if( mActivity.supportsNoiseReduction() ) {
+        if (mActivity.supportsNoiseReduction()) {
             subTestResolutionMaxMP("preference_photo_mode_noise_reduction", MyApplicationInterface.PhotoMode.NoiseReduction, max_mp, false, true, true);
             subTestResolutionMaxMP("preference_photo_mode_noise_reduction", MyApplicationInterface.PhotoMode.NoiseReduction, max_mp, true, true, true);
         }
-        if( mActivity.supportsDRO() ) {
+        if (mActivity.supportsDRO()) {
             subTestResolutionMaxMP("preference_photo_mode_dro", MyApplicationInterface.PhotoMode.DRO, max_mp, false, false, false);
             subTestResolutionMaxMP("preference_photo_mode_dro", MyApplicationInterface.PhotoMode.DRO, max_mp, true, false, false);
         }
-        if( mActivity.supportsFastBurst() ) {
+        if (mActivity.supportsFastBurst()) {
             subTestResolutionMaxMP("preference_photo_mode_fast_burst", MyApplicationInterface.PhotoMode.FastBurst, max_mp, false, true, true);
             subTestResolutionMaxMP("preference_photo_mode_fast_burst", MyApplicationInterface.PhotoMode.FastBurst, max_mp, true, true, true);
         }
@@ -1269,7 +1271,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testAutoFocus");
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
         //int saved_count = mPreview.count_cameraAutoFocus;
@@ -1312,7 +1314,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(mPreview.getCameraController().getMeteringAreas());
         assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
 
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_macro") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_macro")) {
             saved_count = mPreview.count_cameraAutoFocus;
             // test switching mode sets off an autofocus, and resets the focus area
             switchToFocusValue("focus_mode_macro");
@@ -1357,8 +1359,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToFocusValue("focus_mode_locked"); // change to a mode that isn't auto (so that the first iteration of the next loop will set of an autofocus, due to changing the focus mode)
         List<String> supported_focus_values = mPreview.getSupportedFocusValues();
         assertNotNull(supported_focus_values);
-        assertTrue( supported_focus_values.size() > 1 );
-        for(String supported_focus_value : supported_focus_values) {
+        assertTrue(supported_focus_values.size() > 1);
+        for (String supported_focus_value : supported_focus_values) {
             Log.d(TAG, "supported_focus_value: " + supported_focus_value);
             saved_count = mPreview.count_cameraAutoFocus;
             Log.d(TAG, "saved autofocus count: " + saved_count);
@@ -1371,12 +1373,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertNull(mPreview.getCameraController().getMeteringAreas());
             // test that switching focus mode sets off an autofocus in focus auto or macro mode
             String focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "changed focus_value to: "+ focus_value);
+            Log.d(TAG, "changed focus_value to: " + focus_value);
             Log.d(TAG, "count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
-            if( focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") ) {
+            if (focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro")) {
                 assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
-            }
-            else {
+            } else {
                 assertFalse(mPreview.isFocusWaiting());
                 assertEquals(mPreview.count_cameraAutoFocus, saved_count);
             }
@@ -1387,12 +1388,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             Thread.sleep(2000);
             TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
             Log.d(TAG, "count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
-            if( focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") || focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video") ) {
-                if( focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video") ) {
+            if (focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") || focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video")) {
+                if (focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video")) {
                     assertFalse(mPreview.isFocusWaiting());
                     assertEquals(mPreview.count_cameraAutoFocus, saved_count);
-                }
-                else {
+                } else {
                     assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
                 }
                 assertTrue(mPreview.hasFocusArea());
@@ -1400,8 +1400,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
                 assertNotNull(mPreview.getCameraController().getMeteringAreas());
                 assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
-            }
-            else {
+            } else {
                 assertEquals(mPreview.count_cameraAutoFocus, saved_count);
                 assertFalse(mPreview.hasFocusArea());
                 assertNull(mPreview.getCameraController().getFocusAreas());
@@ -1410,7 +1409,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             }
             // also check that focus mode is unchanged
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
-            if( focus_value.equals("focus_mode_auto") ) {
+            if (focus_value.equals("focus_mode_auto")) {
                 break;
             }
         }
@@ -1422,7 +1421,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testStartupAutoFocus");
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
         //int saved_count = mPreview.count_cameraAutoFocus;
@@ -1442,7 +1441,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "2 count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus + " compare to saved_count: " + saved_count);
         assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
 
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_infinity") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_infinity")) {
             switchToFocusValue("focus_mode_infinity");
             restart();
             //saved_count = mPreview.count_cameraAutoFocus;
@@ -1453,7 +1452,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(mPreview.count_cameraAutoFocus, saved_count);
         }
 
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_macro") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_macro")) {
             switchToFocusValue("focus_mode_macro");
             restart();
             //saved_count = mPreview.count_cameraAutoFocus;
@@ -1464,7 +1463,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
         }
 
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_locked") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_locked")) {
             switchToFocusValue("focus_mode_locked");
             restart();
             //saved_count = mPreview.count_cameraAutoFocus;
@@ -1475,7 +1474,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
         }
 
-        if( mPreview.getSupportedFocusValues().contains("focus_mode_continuous_picture") ) {
+        if (mPreview.getSupportedFocusValues().contains("focus_mode_continuous_picture")) {
             switchToFocusValue("focus_mode_continuous_picture");
             restart();
             //saved_count = mPreview.count_cameraAutoFocus;
@@ -1493,11 +1492,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testAutoFocusCorners");
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
-        int [] gui_location = new int[2];
+        int[] gui_location = new int[2];
         mPreview.getView().getLocationOnScreen(gui_location);
         final int step_dist_c = 2;
         final float scale = mActivity.getResources().getDisplayMetrics().density;
@@ -1527,13 +1526,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // do larger step at top-right, due to conflicting with Settings button
         // but we now ignore swipes - so we now test for that instead
         Log.d(TAG, "top-right");
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+width-1-large_step_dist_c, gui_location[0]+width-1, gui_location[1]+large_step_dist_c, gui_location[1], step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + width - 1 - large_step_dist_c, gui_location[0] + width - 1, gui_location[1] + large_step_dist_c, gui_location[1], step_count_c);
         assertFalse(mPreview.hasFocusArea());
         assertNull(mPreview.getCameraController().getFocusAreas());
         assertNull(mPreview.getCameraController().getMeteringAreas());
 
         Log.d(TAG, "bottom-left");
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+step_dist_c, gui_location[0], gui_location[1]+height-1-step_dist_c, gui_location[1]+height-1, step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + step_dist_c, gui_location[0], gui_location[1] + height - 1 - step_dist_c, gui_location[1] + height - 1, step_count_c);
         assertTrue(mPreview.hasFocusArea());
         assertNotNull(mPreview.getCameraController().getFocusAreas());
         assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
@@ -1557,7 +1556,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View faceDetectionButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.face_detection);
         assertEquals(faceDetectionButton.getVisibility(), View.GONE);
 
-        if( !mPreview.supportsFaceDetection() ) {
+        if (!mPreview.supportsFaceDetection()) {
             Log.d(TAG, "face detection not supported");
             return;
         }
@@ -1584,7 +1583,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNull(mPreview.getCameraController().getFocusAreas());
         assertNull(mPreview.getCameraController().getMeteringAreas());
         // check face detection already started
-        assertFalse( mPreview.getCameraController().startFaceDetection() );
+        assertFalse(mPreview.getCameraController().startFaceDetection());
 
         // touch to auto-focus with focus area
         saved_count = mPreview.count_cameraAutoFocus;
@@ -1595,13 +1594,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNull(mPreview.getCameraController().getFocusAreas());
         assertNull(mPreview.getCameraController().getMeteringAreas());
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
             waitUntilCameraOpened();
             // check face detection already started
-            assertFalse( mPreview.getCameraController().startFaceDetection() );
+            assertFalse(mPreview.getCameraController().startFaceDetection());
 
             // return to back camera
             switchToCamera(cameraId);
@@ -1617,7 +1616,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(faceDetectionButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.face_detection_disable));
 
         // check face detection already started
-        assertFalse( mPreview.getCameraController().startFaceDetection() );
+        assertFalse(mPreview.getCameraController().startFaceDetection());
 
         // restart and check still enabled
         restart();
@@ -1628,55 +1627,47 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         clickView(faceDetectionButton);
         waitUntilCameraOpened();
-        assertFalse( settings.getBoolean(PreferenceKeys.FaceDetectionPreferenceKey, false) );
+        assertFalse(settings.getBoolean(PreferenceKeys.FaceDetectionPreferenceKey, false));
         assertEquals(faceDetectionButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.face_detection_enable));
 
         // check face detection not already started
-        assertTrue( mPreview.getCameraController().startFaceDetection() );
+        assertTrue(mPreview.getCameraController().startFaceDetection());
     }
 
     private void subTestPopupButtonAvailability(String test_key, String option, boolean expected) {
-        Log.d(TAG, "test_key: "+ test_key);
-        Log.d(TAG, "option: "+ option);
-        Log.d(TAG, "expected?: "+ expected);
+        Log.d(TAG, "test_key: " + test_key);
+        Log.d(TAG, "option: " + option);
+        Log.d(TAG, "expected?: " + expected);
         View button = mActivity.getUIButton(test_key + "_" + option);
-        if( expected ) {
+        if (expected) {
             boolean is_video = mPreview.isVideo();
-            if( option.equals("focus_mode_continuous_picture") && is_video ) {
+            if (option.equals("focus_mode_continuous_picture") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else if( option.equals("focus_mode_continuous_video") && !is_video ) {
+            } else if (option.equals("focus_mode_continuous_video") && !is_video) {
                 // not allowed in picture mode
                 assertNull(button);
-            }
-            else if( option.equals("flash_auto") && is_video ) {
+            } else if (option.equals("flash_auto") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else if( option.equals("flash_on") && is_video ) {
+            } else if (option.equals("flash_on") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else if( option.equals("flash_red_eye") && is_video ) {
+            } else if (option.equals("flash_red_eye") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else if( option.equals("flash_frontscreen_auto") && is_video ) {
+            } else if (option.equals("flash_frontscreen_auto") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else if( option.equals("flash_frontscreen_on") && is_video ) {
+            } else if (option.equals("flash_frontscreen_on") && is_video) {
                 // not allowed in video mode
                 assertNull(button);
-            }
-            else {
+            } else {
                 assertNotNull(button);
             }
-        }
-        else {
-            Log.d(TAG, "option? "+ option);
-            Log.d(TAG, "button? "+ button);
+        } else {
+            Log.d(TAG, "option? " + option);
+            Log.d(TAG, "button? " + button);
             assertNull(button);
         }
     }
@@ -1687,17 +1678,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     private void subTestPopupButtonAvailability(String option, boolean expected) {
         View button = mActivity.getUIButton(option);
-        if( expected ) {
+        if (expected) {
             assertNotNull(button);
-        }
-        else {
+        } else {
             assertNull(button);
         }
     }
 
     private void subTestPopupButtonAvailability() {
         List<String> supported_flash_values = mPreview.getSupportedFlashValues();
-        Log.d(TAG, "supported_flash_values: "+ supported_flash_values);
+        Log.d(TAG, "supported_flash_values: " + supported_flash_values);
         subTestPopupButtonAvailability("TEST_FLASH", "flash_off", supported_flash_values);
         subTestPopupButtonAvailability("TEST_FLASH", "flash_auto", supported_flash_values);
         subTestPopupButtonAvailability("TEST_FLASH", "flash_on", supported_flash_values);
@@ -1728,19 +1718,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         boolean flash_visible = flashButton.getVisibility() == View.VISIBLE;
         Log.d(TAG, "flash_visible? "+ flash_visible);*/
         boolean exposure_visible = exposureButton.getVisibility() == View.VISIBLE;
-        Log.d(TAG, "exposure_visible? "+ exposure_visible);
+        Log.d(TAG, "exposure_visible? " + exposure_visible);
         boolean exposure_lock_visible = exposureLockButton.getVisibility() == View.VISIBLE;
-        Log.d(TAG, "exposure_lock_visible? "+ exposure_lock_visible);
+        Log.d(TAG, "exposure_lock_visible? " + exposure_lock_visible);
         boolean popup_visible = popupButton.getVisibility() == View.VISIBLE;
-        Log.d(TAG, "popup_visible? "+ popup_visible);
+        Log.d(TAG, "popup_visible? " + popup_visible);
         boolean has_focus = mPreview.supportsFocus();
-        Log.d(TAG, "has_focus? "+ has_focus);
+        Log.d(TAG, "has_focus? " + has_focus);
         boolean has_flash = mPreview.supportsFlash();
-        Log.d(TAG, "has_flash? "+ has_flash);
+        Log.d(TAG, "has_flash? " + has_flash);
         boolean has_exposure = mPreview.supportsExposures();
-        Log.d(TAG, "has_exposure? "+ has_exposure);
+        Log.d(TAG, "has_exposure? " + has_exposure);
         boolean has_exposure_lock = mPreview.supportsExposureLock();
-        Log.d(TAG, "has_exposure_lock? "+ has_exposure_lock);
+        Log.d(TAG, "has_exposure_lock? " + has_exposure_lock);
         //assertTrue(has_focus == focus_visible);
         //assertTrue(has_flash == flash_visible);
         assertEquals(has_exposure, exposure_visible);
@@ -1748,7 +1738,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(popup_visible);
 
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
         subTestPopupButtonAvailability();
     }
@@ -1763,15 +1753,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestFocusFlashAvailability();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
-            Log.d(TAG, "cameraId? "+ cameraId);
+            Log.d(TAG, "cameraId? " + cameraId);
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             //mActivity.clickedSwitchCamera(switchCameraButton);
             clickView(switchCameraButton);
             waitUntilCameraOpened();
             int new_cameraId = mPreview.getCameraId();
-            Log.d(TAG, "new_cameraId? "+ new_cameraId);
+            Log.d(TAG, "new_cameraId? " + new_cameraId);
             assertTrue(cameraId != new_cameraId);
 
             subTestFocusFlashAvailability();
@@ -1788,18 +1778,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View main_button = mActivity.getUIButton(test_key);
         assertNotNull(main_button);
         View button = mActivity.getUIButton(test_key + (next ? "_NEXT" : "_PREV"));
-        if( expected ) {
+        if (expected) {
             assertNotNull(button);
         }
-        if( button != null ) {
+        if (button != null) {
             assertNotNull(button.getContentDescription());
             String content_description = button.getContentDescription().toString();
             assertTrue(content_description.length() > 0);
             String next_string = mActivity.getResources().getString(next ? net.sourceforge.opencamera.R.string.next : net.sourceforge.opencamera.R.string.previous);
             assertTrue(next_string.length() > 0);
             assertTrue(content_description.startsWith(next_string + " " + title));
-        }
-        else {
+        } else {
             Log.d(TAG, "no button found");
         }
     }
@@ -1815,12 +1804,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
         assertFalse(mPreview.isVideo());
         String photo_focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "picture photo_focus_value: "+ photo_focus_value);
+        Log.d(TAG, "picture photo_focus_value: " + photo_focus_value);
 
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         clickView(popupButton);
         Log.d(TAG, "wait for popup to open");
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
         Log.d(TAG, "popup is now open");
 
@@ -1839,20 +1828,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         waitUntilCameraOpened();
         assertTrue(mPreview.isVideo());
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "video focus_value: "+ focus_value);
-        if( mPreview.supportsFocus() ) {
+        Log.d(TAG, "video focus_value: " + focus_value);
+        if (mPreview.supportsFocus()) {
             assertEquals("focus_mode_continuous_video", focus_value);
         }
 
         // test popup buttons for video mode:
         clickView(popupButton);
         Log.d(TAG, "wait for popup to open");
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
         Log.d(TAG, "popup is now open");
         subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.video_quality, "VIDEO_RESOLUTIONS", false, true);
         subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.video_quality, "VIDEO_RESOLUTIONS", true, false);
-        if( mActivity.getApplicationInterface().getSupportedVideoCaptureRates().size() > 1 ) {
+        if (mActivity.getApplicationInterface().getSupportedVideoCaptureRates().size() > 1) {
             subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.preference_video_capture_rate, "VIDEOCAPTURERATE", false, false);
             subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.preference_video_capture_rate, "VIDEOCAPTURERATE", true, true);
         }
@@ -1869,8 +1858,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         waitUntilCameraOpened();
         assertFalse(mPreview.isVideo());
         focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "picture focus_value: "+ focus_value);
-        if( mPreview.supportsFocus() ) {
+        Log.d(TAG, "picture focus_value: " + focus_value);
+        if (mPreview.supportsFocus()) {
             assertEquals(focus_value, photo_focus_value);
             // check that this doesn't cause an autofocus
             assertFalse(mPreview.isFocusWaiting());
@@ -1878,7 +1867,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(mPreview.count_cameraAutoFocus, saved_count);
         }
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -1887,12 +1876,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertTrue(cameraId != new_cameraId);
             // n.b., front camera default photo focus value not necessarily same as back camera, if they have different focus modes
             photo_focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "front picture photo_focus_value: "+ photo_focus_value);
+            Log.d(TAG, "front picture photo_focus_value: " + photo_focus_value);
 
             // test popup buttons for photo mode:
             clickView(popupButton);
             Log.d(TAG, "wait for popup to open");
-            while( !mActivity.popupIsOpen() ) {
+            while (!mActivity.popupIsOpen()) {
             }
             Log.d(TAG, "popup is now open");
             subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.preference_resolution, "PHOTO_RESOLUTIONS", false, true);
@@ -1908,20 +1897,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             waitUntilCameraOpened();
             assertTrue(mPreview.isVideo());
             focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "front video focus_value: "+ focus_value);
-            if( mPreview.supportsFocus() ) {
+            Log.d(TAG, "front video focus_value: " + focus_value);
+            if (mPreview.supportsFocus()) {
                 assertEquals("focus_mode_continuous_video", focus_value);
             }
 
             // test popup buttons for video mode:
             clickView(popupButton);
             Log.d(TAG, "wait for popup to open");
-            while( !mActivity.popupIsOpen() ) {
+            while (!mActivity.popupIsOpen()) {
             }
             Log.d(TAG, "popup is now open");
             subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.video_quality, "VIDEO_RESOLUTIONS", false, true);
             subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.video_quality, "VIDEO_RESOLUTIONS", true, false);
-            if( mActivity.getApplicationInterface().getSupportedVideoCaptureRates().size() > 1 ) {
+            if (mActivity.getApplicationInterface().getSupportedVideoCaptureRates().size() > 1) {
                 subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.preference_video_capture_rate, "VIDEOCAPTURERATE", false, false);
                 subTestPopupButtonContentDescription(net.sourceforge.opencamera.R.string.preference_video_capture_rate, "VIDEOCAPTURERATE", true, true);
             }
@@ -1936,8 +1925,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             waitUntilCameraOpened();
             assertFalse(mPreview.isVideo());
             focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "front picture focus_value: "+ focus_value);
-            if( mPreview.supportsFocus() ) {
+            Log.d(TAG, "front picture focus_value: " + focus_value);
+            if (mPreview.supportsFocus()) {
                 assertEquals(focus_value, photo_focus_value);
             }
 
@@ -1945,7 +1934,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             switchToCamera(cameraId);
         }
 
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             // now test we remember the focus mode for photo and video
 
             switchToFocusValue("focus_mode_continuous_picture");
@@ -1954,7 +1943,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             waitUntilCameraOpened();
             assertTrue(mPreview.isVideo());
             focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "video focus_value: "+ focus_value);
+            Log.d(TAG, "video focus_value: " + focus_value);
             assertEquals("focus_mode_continuous_video", focus_value);
 
             String non_default_focus = getNonDefaultFocus();
@@ -1964,18 +1953,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             waitUntilCameraOpened();
             assertFalse(mPreview.isVideo());
             focus_value = mPreview.getCameraController().getFocusValue();
-            Log.d(TAG, "picture focus_value: "+ focus_value);
+            Log.d(TAG, "picture focus_value: " + focus_value);
             assertEquals("focus_mode_continuous_picture", focus_value);
 
             clickView(switchVideoButton);
             waitUntilCameraOpened();
             assertTrue(mPreview.isVideo());
             focus_value = mPreview.getCameraController().getFocusValue();
-            if( non_default_focus.equals("focus_mode_infinity") && focus_value.equals("focus_mode_manual2") ) {
+            if (non_default_focus.equals("focus_mode_infinity") && focus_value.equals("focus_mode_manual2")) {
                 // for Camera2, focus_mode_infinity is represented as focus_mode_manual2
                 focus_value = "focus_mode_infinity";
             }
-            Log.d(TAG, "video focus_value: "+ focus_value);
+            Log.d(TAG, "video focus_value: " + focus_value);
             assertEquals(non_default_focus, focus_value);
         }
     }
@@ -1988,7 +1977,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2001,32 +1990,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int saved_count_cameraContinuousFocusMoving = mPreview.count_cameraContinuousFocusMoving;
         Thread.sleep(2000); // n.b., Galaxy S10e seems to need longer delay than other devices for continuous focus to occur
         int new_count_cameraContinuousFocusMoving = mPreview.count_cameraContinuousFocusMoving;
-        Log.d(TAG, "count_cameraContinuousFocusMoving compare saved: "+ saved_count_cameraContinuousFocusMoving + " to new: " + new_count_cameraContinuousFocusMoving);
+        Log.d(TAG, "count_cameraContinuousFocusMoving compare saved: " + saved_count_cameraContinuousFocusMoving + " to new: " + new_count_cameraContinuousFocusMoving);
         assertEquals(0, mPreview.getCameraController().test_af_state_null_focus);
-        assertTrue( new_count_cameraContinuousFocusMoving > saved_count_cameraContinuousFocusMoving );
+        assertTrue(new_count_cameraContinuousFocusMoving > saved_count_cameraContinuousFocusMoving);
 
         // switch to video
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "video focus_value: "+ focus_value);
+        Log.d(TAG, "video focus_value: " + focus_value);
         assertEquals("focus_mode_continuous_video", focus_value);
 
         // switch to photo
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "video focus_value: "+ focus_value);
+        Log.d(TAG, "video focus_value: " + focus_value);
         assertEquals("focus_mode_continuous_picture", focus_value);
 
         // check continuous focus is working
         saved_count_cameraContinuousFocusMoving = mPreview.count_cameraContinuousFocusMoving;
         Thread.sleep(3000);
         new_count_cameraContinuousFocusMoving = mPreview.count_cameraContinuousFocusMoving;
-        Log.d(TAG, "count_cameraContinuousFocusMoving compare saved: "+ saved_count_cameraContinuousFocusMoving + " to new: " + new_count_cameraContinuousFocusMoving);
+        Log.d(TAG, "count_cameraContinuousFocusMoving compare saved: " + saved_count_cameraContinuousFocusMoving + " to new: " + new_count_cameraContinuousFocusMoving);
         assertEquals(0, mPreview.getCameraController().test_af_state_null_focus);
-        assertTrue( new_count_cameraContinuousFocusMoving > saved_count_cameraContinuousFocusMoving );
+        assertTrue(new_count_cameraContinuousFocusMoving > saved_count_cameraContinuousFocusMoving);
     }
 
     /* Tests everything works okay if starting in continuous video focus mode when in photo mode, including opening popup, and switching to video and back.
@@ -2037,7 +2026,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2051,7 +2040,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
         Thread.sleep(1000);
@@ -2061,13 +2050,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         waitUntilCameraOpened();
     }
 
-    /** Return the number of files in the save folder. 0 will be returned if the folder doesn't
-     *  exist.
+    /**
+     * Return the number of files in the save folder. 0 will be returned if the folder doesn't
+     * exist.
      */
     private int getNFiles() {
         //File folder = mActivity.getImageFolder();
         //File [] files = folder.listFiles();
-        String [] files = filesInSaveFolder();
+        String[] files = filesInSaveFolder();
         Log.d(TAG, "getNFiles: " + Arrays.toString(files));
         return files == null ? 0 : files.length;
     }
@@ -2075,7 +2065,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void subTestContinuousPictureFocusRepeat() throws InterruptedException {
         Log.d(TAG, "subTestContinuousPictureFocusRepeat");
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2102,8 +2092,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // wait until photos taken
         // wait, and test that we've taken the photos by then
         long time_s = System.currentTimeMillis();
-        while( mPreview.count_cameraTakePicture < 3 ) {
-            assertTrue( System.currentTimeMillis() - time_s < 20000 );
+        while (mPreview.count_cameraTakePicture < 3) {
+            assertTrue(System.currentTimeMillis() - time_s < 20000);
         }
         Thread.sleep(2000); // allow pictures to save
         assertTrue(mPreview.isPreviewStarted()); // check preview restarted
@@ -2143,7 +2133,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2170,7 +2160,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals("focus_mode_continuous_picture", mPreview.getCurrentFocusValue());
         assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue());
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-        if( focus_value.equals("focus_mode_continuous_picture") )
+        if (focus_value.equals("focus_mode_continuous_picture"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2208,7 +2198,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2236,7 +2226,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals("focus_mode_continuous_picture", mPreview.getCurrentFocusValue());
         assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue());
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-        if( focus_value.equals("focus_mode_continuous_picture") )
+        if (focus_value.equals("focus_mode_continuous_picture"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2245,7 +2235,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Thread.sleep(1000);
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-        if( focus_value.equals("focus_mode_continuous_picture") )
+        if (focus_value.equals("focus_mode_continuous_picture"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2286,7 +2276,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2299,7 +2289,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
         assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
 
-        for(int i=0;i<8;i++) {
+        for (int i = 0; i < 8; i++) {
             Log.d(TAG, "about to click preview for autofocus: " + i);
             int saved_count = mPreview.count_cameraAutoFocus;
             Thread.sleep(1000); // needed for Galaxy S10e for the touch to register
@@ -2313,7 +2303,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals("focus_mode_continuous_picture", mPreview.getCurrentFocusValue());
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue());
             assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-            if( focus_value.equals("focus_mode_continuous_picture") )
+            if (focus_value.equals("focus_mode_continuous_picture"))
                 assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
             else
                 assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2337,7 +2327,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2361,7 +2351,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Thread.sleep(1000);
 
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-        if( focus_value.equals("focus_mode_continuous_picture") )
+        if (focus_value.equals("focus_mode_continuous_picture"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2370,7 +2360,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Thread.sleep(1000);
         assertEquals(mPreview.getCurrentFocusValue(), focus_value_ui);
-        if( focus_value.equals("focus_mode_continuous_picture") )
+        if (focus_value.equals("focus_mode_continuous_picture"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
@@ -2398,7 +2388,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -2442,7 +2432,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
 
         assertEquals(1, mPreview.count_cameraTakePicture);
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             assertTrue(mActivity.testHasNotification());
         }
         mActivity.waitUntilImageQueueEmpty();
@@ -2467,11 +2457,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2483,7 +2473,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "video focus_value: "+ focus_value);
+        Log.d(TAG, "video focus_value: " + focus_value);
         assertEquals("focus_mode_continuous_video", focus_value);
 
         View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
@@ -2491,19 +2481,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         waitUntilCameraOpened();
         // camera becomes invalid when switching cameras
         focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "front video focus_value: "+ focus_value);
+        Log.d(TAG, "front video focus_value: " + focus_value);
         // don't care when focus mode is for front camera (focus may not be supported for front camera)
 
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "front focus_value: "+ focus_value);
+        Log.d(TAG, "front focus_value: " + focus_value);
         // don't care when focus mode is for front camera (focus may not be supported for front camera)
 
         switchToCamera(cameraId);
 
         focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "end focus_value: "+ focus_value);
+        Log.d(TAG, "end focus_value: " + focus_value);
         assertEquals("focus_mode_auto", focus_value);
     }
 
@@ -2518,11 +2508,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2537,7 +2527,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToCamera(cameraId);
 
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "focus_value: "+ focus_value);
+        Log.d(TAG, "focus_value: " + focus_value);
         assertEquals(focus_value, non_default_focus_mode);
     }
 
@@ -2553,7 +2543,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2563,7 +2553,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "focus_value after switching to video mode: "+ focus_value);
+        Log.d(TAG, "focus_value after switching to video mode: " + focus_value);
         assertEquals("focus_mode_continuous_video", focus_value);
 
         String non_default_focus_mode = getNonDefaultFocus();
@@ -2589,7 +2579,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2600,7 +2590,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         clickView(switchVideoButton);
         waitUntilCameraOpened();
         String focus_value = mPreview.getCameraController().getFocusValue();
-        Log.d(TAG, "focus_value after switching to video mode: "+ focus_value);
+        Log.d(TAG, "focus_value after switching to video mode: " + focus_value);
         assertEquals("focus_mode_continuous_video", focus_value);
 
         clickView(switchVideoButton);
@@ -2625,7 +2615,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
@@ -2661,7 +2651,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     }
 
     private void subTestISOButtonAvailability() {
-        if( mPreview.isVideoRecording() ) {
+        if (mPreview.isVideoRecording()) {
             // shouldn't show ISO buttons when video recording
             subTestPopupButtonAvailability("TEST_ISO", "auto", false);
             subTestPopupButtonAvailability("TEST_ISO", "100", false);
@@ -2669,21 +2659,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             subTestPopupButtonAvailability("TEST_ISO", "400", false);
             subTestPopupButtonAvailability("TEST_ISO", "800", false);
             subTestPopupButtonAvailability("TEST_ISO", "1600", false);
-        }
-        else if( mPreview.supportsISORange() ) {
+        } else if (mPreview.supportsISORange()) {
             subTestPopupButtonAvailability("TEST_ISO", "auto", true);
-            int [] test_isos = {0, 50, 100, 200, 400, 800, 1600, 3200, 6400, 10000};
+            int[] test_isos = {0, 50, 100, 200, 400, 800, 1600, 3200, 6400, 10000};
             int min_iso = mPreview.getMinimumISO();
             int max_iso = mPreview.getMaximumISO();
-            for(int test_iso : test_isos) {
+            for (int test_iso : test_isos) {
                 subTestPopupButtonAvailability("TEST_ISO", "" + test_iso, test_iso >= min_iso && test_iso <= max_iso);
             }
-            subTestPopupButtonAvailability("TEST_ISO", "" + (min_iso-1), false);
+            subTestPopupButtonAvailability("TEST_ISO", "" + (min_iso - 1), false);
             subTestPopupButtonAvailability("TEST_ISO", "" + min_iso, true);
             subTestPopupButtonAvailability("TEST_ISO", "" + max_iso, true);
-            subTestPopupButtonAvailability("TEST_ISO", "" + (max_iso+1), false);
-        }
-        else {
+            subTestPopupButtonAvailability("TEST_ISO", "" + (max_iso + 1), false);
+        } else {
             List<String> supported_iso_values = mPreview.getSupportedISOs();
             subTestPopupButtonAvailability("TEST_ISO", "auto", supported_iso_values);
             subTestPopupButtonAvailability("TEST_ISO", "100", supported_iso_values);
@@ -2699,7 +2687,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testPreviewBitmap() throws InterruptedException {
         Log.d(TAG, "testPreviewBitmap");
 
-        if( !mActivity.supportsPreviewBitmaps() ) {
+        if (!mActivity.supportsPreviewBitmaps()) {
             Log.d(TAG, "preview bitmaps not supported");
             return;
         }
@@ -2707,9 +2695,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
         Thread.sleep(1000);
 
-        long [] delays = {20, 50, 100, 1000};
-        int [] n_iters = {50, 30, 30, 3};
-        if( isEmulator() ) {
+        long[] delays = {20, 50, 100, 1000};
+        int[] n_iters = {50, 30, 30, 3};
+        if (isEmulator()) {
             // this takes much longer to run on emulator, due to taking ~15s for the first waitForIdleSync() in the loop
             n_iters = new int[]{1, 1, 1, 1};
         }
@@ -2720,9 +2708,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertFalse(mPreview.isPreviewBitmapEnabled());
         assertFalse(mPreview.refreshPreviewBitmapTaskIsRunning());
 
-        for(int i=0;i<delays.length;i++) {
+        for (int i = 0; i < delays.length; i++) {
             Log.d(TAG, ">>> i = " + i + " delay: " + delays[i]);
-            for(int j=0;j<n_iters[i];j++) {
+            for (int j = 0; j < n_iters[i]; j++) {
                 Log.d(TAG, "    >>> j = " + j + " / " + n_iters[i]);
                 SharedPreferences.Editor editor = settings.edit();
 
@@ -2775,7 +2763,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(exposureButton.getVisibility(), (mPreview.supportsExposures() ? View.VISIBLE : View.GONE));
         assertEquals(exposureContainer.getVisibility(), View.GONE);
 
-        if( !mPreview.supportsExposures() ) {
+        if (!mPreview.supportsExposures()) {
             return;
         }
 
@@ -2811,11 +2799,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mPreview.getCurrentExposure() - mPreview.getMinimumExposure(), seekBar.getProgress());
 
         // test touch to focus clears the exposure controls
-        int [] gui_location = new int[2];
+        int[] gui_location = new int[2];
         mPreview.getView().getLocationOnScreen(gui_location);
         final int step_dist_c = 2;
         final int step_count_c = 10;
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+step_dist_c, gui_location[0], gui_location[1]+step_dist_c, gui_location[1], step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + step_dist_c, gui_location[0], gui_location[1] + step_dist_c, gui_location[1], step_count_c);
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
         assertEquals(exposureContainer.getVisibility(), View.GONE);
         clickView(exposureButton);
@@ -2831,7 +2819,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mPreview.getCurrentExposure() - mPreview.getMinimumExposure(), seekBar.getProgress());
 
         // clear again so as to not interfere with take photo routine
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+step_dist_c, gui_location[0], gui_location[1]+step_dist_c, gui_location[1], step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + step_dist_c, gui_location[0], gui_location[1] + step_dist_c, gui_location[1], step_count_c);
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
         assertEquals(exposureContainer.getVisibility(), View.GONE);
 
@@ -2883,7 +2871,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
         assertEquals(exposureContainer.getVisibility(), View.GONE);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -2892,7 +2880,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(exposureButton.getVisibility(), (mPreview.supportsExposures() ? View.VISIBLE : View.GONE));
             assertEquals(exposureContainer.getVisibility(), View.GONE);
 
-            if( mPreview.supportsExposures() ) {
+            if (mPreview.supportsExposures()) {
                 assertEquals(mPreview.getCurrentExposure(), -1);
                 assertEquals(mPreview.getCurrentExposure() - mPreview.getMinimumExposure(), seekBar.getProgress());
 
@@ -2909,11 +2897,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoManualISOExposure");
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             Log.d(TAG, "test requires camera2 api");
             return;
-        }
-        else if( !mPreview.supportsISORange() ) {
+        } else if (!mPreview.supportsISORange()) {
             Log.d(TAG, "test requires manual iso range");
             return;
         }
@@ -2944,7 +2931,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         assertEquals(mPreview.getCameraController().getISO(), mPreview.getMinimumISO());
 
-        if( mPreview.supportsExposureTime() ) {
+        if (mPreview.supportsExposureTime()) {
             Log.d(TAG, "change exposure time to min");
             exposureTimeSeekBar.setProgress(0);
             this.getInstrumentation().waitForIdleSync();
@@ -2961,20 +2948,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mPreview.getCameraController().getISO(), mPreview.getMaximumISO());
 
         // n.b., currently don't test this on devices with long shutter times (e.g., OnePlus 3T)
-        if( mPreview.supportsExposureTime() && mPreview.getMaximumExposureTime() < 1000000000 ) {
+        if (mPreview.supportsExposureTime() && mPreview.getMaximumExposureTime() < 1000000000) {
             Log.d(TAG, "change exposure time to max");
             exposureTimeSeekBar.setProgress(exposureTimeSeekBar.getMax());
             this.getInstrumentation().waitForIdleSync();
             assertEquals(mPreview.getCameraController().getISO(), mPreview.getMaximumISO());
             assertEquals(mPreview.getCameraController().getExposureTime(), mPreview.getMaximumExposureTime());
-        }
-        else {
+        } else {
             Log.d(TAG, "change exposure time to middle");
             //mActivity.setProgressSeekbarExponential(exposureTimeSeekBar, mPreview.getMinimumExposureTime(), mPreview.getMaximumExposureTime(), 1000000000);
-            exposureTimeSeekBar.setProgress(exposureTimeSeekBar.getMax()/2);
+            exposureTimeSeekBar.setProgress(exposureTimeSeekBar.getMax() / 2);
             this.getInstrumentation().waitForIdleSync();
             assertEquals(mPreview.getCameraController().getISO(), mPreview.getMaximumISO());
-            assertTrue( mPreview.getCameraController().getExposureTime() != mPreview.getMaximumExposureTime() );
+            assertTrue(mPreview.getCameraController().getExposureTime() != mPreview.getMaximumExposureTime());
         }
         long saved_exposure_time = mPreview.getCameraController().getExposureTime();
 
@@ -2988,15 +2974,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(isoSeekBar.getVisibility(), View.VISIBLE);
         assertEquals(exposureTimeSeekBar.getVisibility(), (mPreview.supportsExposureTime() ? View.VISIBLE : View.GONE));
         assertEquals(mPreview.getCameraController().getISO(), mPreview.getMaximumISO());
-        if( mPreview.supportsExposureTime() )
+        if (mPreview.supportsExposureTime())
             assertEquals(mPreview.getCameraController().getExposureTime(), saved_exposure_time);
 
         // test touch to focus clears the exposure controls
-        int [] gui_location = new int[2];
+        int[] gui_location = new int[2];
         mPreview.getView().getLocationOnScreen(gui_location);
         final int step_dist_c = 2;
         final int step_count_c = 10;
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+step_dist_c, gui_location[0], gui_location[1]+step_dist_c, gui_location[1], step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + step_dist_c, gui_location[0], gui_location[1] + step_dist_c, gui_location[1], step_count_c);
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
         assertEquals(exposureContainer.getVisibility(), View.GONE);
         clickView(exposureButton);
@@ -3005,17 +2991,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(isoSeekBar.getVisibility(), View.VISIBLE);
         assertEquals(exposureTimeSeekBar.getVisibility(), (mPreview.supportsExposureTime() ? View.VISIBLE : View.GONE));
         assertEquals(mPreview.getCameraController().getISO(), mPreview.getMaximumISO());
-        if( mPreview.supportsExposureTime() )
+        if (mPreview.supportsExposureTime())
             assertEquals(mPreview.getCameraController().getExposureTime(), saved_exposure_time);
 
         // clear again so as to not interfere with take photo routine
-        TouchUtils.drag(MainActivityTest.this, gui_location[0]+step_dist_c, gui_location[0], gui_location[1]+step_dist_c, gui_location[1], step_count_c);
+        TouchUtils.drag(MainActivityTest.this, gui_location[0] + step_dist_c, gui_location[0], gui_location[1] + step_dist_c, gui_location[1], step_count_c);
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
         assertEquals(exposureContainer.getVisibility(), View.GONE);
 
         subTestTakePhoto(false, false, true, true, false, false, false, false);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             int old_max = mPreview.getMaximumISO();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
@@ -3026,13 +3012,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(exposureContainer.getVisibility(), View.GONE);
             // we use same ISO for all cameras, but if new camera has lower max, it should automatically reduce
             assertEquals(Math.min(old_max, mPreview.getMaximumISO()), mPreview.getCameraController().getISO());
-            if( mPreview.supportsExposureTime() ) {
+            if (mPreview.supportsExposureTime()) {
                 Log.d(TAG, "exposure time: " + mPreview.getCameraController().getExposureTime());
                 Log.d(TAG, "min exposure time: " + mPreview.getMinimumExposureTime());
                 Log.d(TAG, "max exposure time: " + mPreview.getMaximumExposureTime());
-                if( saved_exposure_time < mPreview.getMinimumExposureTime() )
+                if (saved_exposure_time < mPreview.getMinimumExposureTime())
                     saved_exposure_time = mPreview.getMinimumExposureTime();
-                if( saved_exposure_time > mPreview.getMaximumExposureTime() )
+                if (saved_exposure_time > mPreview.getMaximumExposureTime())
                     saved_exposure_time = mPreview.getMaximumExposureTime();
                 assertEquals(mPreview.getCameraController().getExposureTime(), saved_exposure_time);
             }
@@ -3043,7 +3029,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(isoSeekBar.getVisibility(), View.VISIBLE);
             assertEquals(exposureTimeSeekBar.getVisibility(), (mPreview.supportsExposureTime() ? View.VISIBLE : View.GONE));
             assertEquals(Math.min(old_max, mPreview.getMaximumISO()), mPreview.getCameraController().getISO());
-            if( mPreview.supportsExposureTime() )
+            if (mPreview.supportsExposureTime())
                 assertEquals(mPreview.getCameraController().getExposureTime(), saved_exposure_time);
         }
     }
@@ -3052,10 +3038,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoManualWB");
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
         }
-        if( !mPreview.supportsWhiteBalanceTemperature() ) {
+        if (!mPreview.supportsWhiteBalanceTemperature()) {
             return;
         }
 
@@ -3077,7 +3063,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         clickView(popupButton);
         Log.d(TAG, "wait for popup to open");
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
         Log.d(TAG, "popup is now open");
         SharedPreferences.Editor editor = settings.edit();
@@ -3148,7 +3134,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(exposureContainer.getVisibility(), View.GONE);
         assertEquals(manualWBContainer.getVisibility(), View.GONE);
 
-        if( !mPreview.supportsExposures() ) {
+        if (!mPreview.supportsExposures()) {
             return;
         }
 
@@ -3162,7 +3148,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(seekBarWB.getVisibility(), View.VISIBLE);
     }
 
-    /** Tests that the audio control icon is visible or not as expect (guards against bug fixed in 1.30)
+    /**
+     * Tests that the audio control icon is visible or not as expect (guards against bug fixed in 1.30)
      */
     public void testAudioControlIcon() {
         Log.d(TAG, "testAudioControlIcon");
@@ -3205,13 +3192,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(audioControlButton.getVisibility(), View.GONE);
     }
 
-    /** Test for on-screen icon. Cycles through cameras and checks that the visibility of
-     *  the icons matches whether available for that camera - currently tests for flash and RAW.
-     *  For multi-camera devices, this tests the behaviour with
-     *  PreferenceKeys.MultiCamButtonPreferenceKey devices, so the switch camera icon still cycles
-     *  through all cameras.
+    /**
+     * Test for on-screen icon. Cycles through cameras and checks that the visibility of
+     * the icons matches whether available for that camera - currently tests for flash and RAW.
+     * For multi-camera devices, this tests the behaviour with
+     * PreferenceKeys.MultiCamButtonPreferenceKey devices, so the switch camera icon still cycles
+     * through all cameras.
      */
-    public void testIconsAgainstCameras()  {
+    public void testIconsAgainstCameras() {
         Log.d(TAG, "testIconsAgainstCameras");
         setToDefault();
 
@@ -3219,13 +3207,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean(PreferenceKeys.ShowCycleFlashPreferenceKey, true);
         editor.putBoolean(PreferenceKeys.ShowCycleRawPreferenceKey, true);
-        if( mActivity.isMultiCamEnabled() ) {
+        if (mActivity.isMultiCamEnabled()) {
             editor.putBoolean(PreferenceKeys.MultiCamButtonPreferenceKey, false);
         }
         editor.apply();
         updateForSettings();
 
-        for(int i=0;i<mPreview.getCameraControllerManager().getNumberOfCameras();i++) {
+        for (int i = 0; i < mPreview.getCameraControllerManager().getNumberOfCameras(); i++) {
             View cycleFlashButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.cycle_flash);
             View cycleRawButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.cycle_raw);
 
@@ -3270,10 +3258,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Log.d(TAG, "wait until finished taking photo");
         long time_s = System.currentTimeMillis();
-        while( mPreview.isTakingPhoto() || !mActivity.getApplicationInterface().canTakeNewPhoto() ) {
+        while (mPreview.isTakingPhoto() || !mActivity.getApplicationInterface().canTakeNewPhoto()) {
             // make sure the test fails rather than hanging, if for some reason we get stuck (note that testTakePhotoManualISOExposure takes over 10s on Nexus 6)
             // also see note at end of setToDefault for Nokia 8, need to sleep briefly to avoid hanging here
-            if( !is_focus_bracketing ) {
+            if (!is_focus_bracketing) {
                 assertTrue(System.currentTimeMillis() - time_s < (is_panorama ? 50000 : 20000)); // need longer for panorama on Nexus 7 for testTakePhotoPanoramaMax
             }
             assertTrue(!mPreview.isTakingPhoto() || switchCameraButton.getVisibility() == View.GONE);
@@ -3299,23 +3287,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int saved_count = mPreview.count_cameraAutoFocus;
         Log.d(TAG, "saved count_cameraAutoFocus: " + saved_count);
         Log.d(TAG, "about to click preview for autofocus");
-        if( double_tap_photo ) {
+        if (double_tap_photo) {
             TouchUtils.tapView(MainActivityTest.this, mPreview.getView());
-        }
-        else {
+        } else {
             TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
         }
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "1 count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
         assertEquals((manual_can_auto_focus ? saved_count + 1 : saved_count), mPreview.count_cameraAutoFocus);
         assertEquals(mPreview.hasFocusArea(), can_focus_area);
-        if( can_focus_area ) {
+        if (can_focus_area) {
             assertNotNull(mPreview.getCameraController().getFocusAreas());
             assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
             assertNotNull(mPreview.getCameraController().getMeteringAreas());
             assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
-        }
-        else {
+        } else {
             assertNull(mPreview.getCameraController().getFocusAreas());
             // we still set metering areas
             assertNotNull(mPreview.getCameraController().getMeteringAreas());
@@ -3324,18 +3310,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         String new_focus_value_ui = mPreview.getCurrentFocusValue();
         //noinspection StringEquality
         assertTrue(new_focus_value_ui == focus_value_ui || new_focus_value_ui.equals(focus_value_ui)); // also need to do == check, as strings may be null if focus not supported
-        if( focus_value.equals("focus_mode_continuous_picture") && !single_tap_photo && mPreview.supportsFocus() && mPreview.getSupportedFocusValues().contains("focus_mode_auto") )
+        if (focus_value.equals("focus_mode_continuous_picture") && !single_tap_photo && mPreview.supportsFocus() && mPreview.getSupportedFocusValues().contains("focus_mode_auto"))
             assertEquals("focus_mode_auto", mPreview.getCameraController().getFocusValue()); // continuous focus mode switches to auto focus on touch (unless single_tap_photo, or auto focus not supported)
         else
             assertEquals(mPreview.getCameraController().getFocusValue(), focus_value);
-        if( double_tap_photo ) {
+        if (double_tap_photo) {
             Thread.sleep(100);
             Log.d(TAG, "about to click preview again for double tap");
             //TouchUtils.tapView(MainActivityTest.this, mPreview.getView());
             mPreview.onDoubleTap(); // calling tapView twice doesn't seem to work consistently, so we call this directly!
             this.getInstrumentation().waitForIdleSync();
         }
-        if( wait_after_focus && !single_tap_photo && !double_tap_photo) {
+        if (wait_after_focus && !single_tap_photo && !double_tap_photo) {
             // don't wait after single or double tap photo taking, as the photo taking operation is already started
             Log.d(TAG, "wait after focus...");
             Thread.sleep(3000);
@@ -3359,10 +3345,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         String new_focus_value = mPreview.getCameraController().getFocusValue();
         Log.d(TAG, "focus_value: " + focus_value);
         Log.d(TAG, "new focus_value: " + new_focus_value);
-        if( new_focus_value_ui != null && new_focus_value_ui.equals("focus_mode_continuous_picture") && focus_value.equals("focus_mode_auto") && new_focus_value.equals("focus_mode_continuous_picture") ) {
+        if (new_focus_value_ui != null && new_focus_value_ui.equals("focus_mode_continuous_picture") && focus_value.equals("focus_mode_auto") && new_focus_value.equals("focus_mode_continuous_picture")) {
             // this is fine, it just means we were temporarily in touch-to-focus mode
-        }
-        else {
+        } else {
             assertEquals(new_focus_value, focus_value);
         }
     }
@@ -3371,30 +3356,27 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // in locked focus mode, taking photo should never redo an auto-focus
         // if photo mode, we may do a refocus if the previous auto-focus failed, but not if it succeeded
         Log.d(TAG, "2 count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
-        if( locked_focus ) {
+        if (locked_focus) {
             assertEquals(mPreview.count_cameraAutoFocus, (can_auto_focus ? saved_count + 1 : saved_count));
         }
-        if( test_wait_capture_result ) {
+        if (test_wait_capture_result) {
             // if test_wait_capture_result, then we'll have waited too long, so focus settings may have changed
-        }
-        else if( touch_to_focus ) {
+        } else if (touch_to_focus) {
             Log.d(TAG, "can_focus_area?: " + can_focus_area);
             Log.d(TAG, "hasFocusArea?: " + mPreview.hasFocusArea());
             assertEquals(mPreview.hasFocusArea(), can_focus_area);
-            if( can_focus_area ) {
+            if (can_focus_area) {
                 assertNotNull(mPreview.getCameraController().getFocusAreas());
                 assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
                 assertNotNull(mPreview.getCameraController().getMeteringAreas());
                 assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
-            }
-            else {
+            } else {
                 assertNull(mPreview.getCameraController().getFocusAreas());
                 // we still set metering areas
                 assertNotNull(mPreview.getCameraController().getMeteringAreas());
                 assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
             }
-        }
-        else {
+        } else {
             assertFalse(mPreview.hasFocusArea());
             assertNull(mPreview.getCameraController().getFocusAreas());
             assertNull(mPreview.getCameraController().getMeteringAreas());
@@ -3403,7 +3385,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     private int getExpNNewFiles(final boolean is_raw) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity);
-        boolean hdr_save_expo =  sharedPreferences.getBoolean(PreferenceKeys.HDRSaveExpoPreferenceKey, false);
+        boolean hdr_save_expo = sharedPreferences.getBoolean(PreferenceKeys.HDRSaveExpoPreferenceKey, false);
         boolean is_hdr = mActivity.supportsHDR() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_hdr");
         boolean is_expo = mActivity.supportsExpoBracketing() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_expo_bracketing");
         boolean is_focus_bracketing = mActivity.supportsFocusBracketing() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_focus_bracketing");
@@ -3416,29 +3398,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int n_fast_burst_images = Integer.parseInt(n_fast_burst_images_s);
 
         int exp_n_new_files;
-        if( is_hdr && hdr_save_expo ) {
+        if (is_hdr && hdr_save_expo) {
             exp_n_new_files = 4;
-            if( is_raw && !mActivity.getApplicationInterface().isRawOnly() ) {
+            if (is_raw && !mActivity.getApplicationInterface().isRawOnly()) {
                 exp_n_new_files += 3;
             }
-        }
-        else if( is_expo ) {
+        } else if (is_expo) {
             exp_n_new_files = n_expo_images;
-            if( is_raw && !mActivity.getApplicationInterface().isRawOnly() ) {
+            if (is_raw && !mActivity.getApplicationInterface().isRawOnly()) {
                 exp_n_new_files *= 2;
             }
-        }
-        else if( is_focus_bracketing ) {
+        } else if (is_focus_bracketing) {
             exp_n_new_files = n_focus_bracketing_images;
-            if( is_raw && !mActivity.getApplicationInterface().isRawOnly() ) {
+            if (is_raw && !mActivity.getApplicationInterface().isRawOnly()) {
                 exp_n_new_files *= 2;
             }
-        }
-        else if( is_fast_burst )
+        } else if (is_fast_burst)
             exp_n_new_files = n_fast_burst_images;
         else {
             exp_n_new_files = 1;
-            if( is_raw && !mActivity.getApplicationInterface().isRawOnly() ) {
+            if (is_raw && !mActivity.getApplicationInterface().isRawOnly()) {
                 exp_n_new_files *= 2;
             }
         }
@@ -3446,10 +3425,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         return exp_n_new_files;
     }
 
-    private void checkFilenames(final boolean is_raw, final String [] files, final String [] files2) {
+    private void checkFilenames(final boolean is_raw, final String[] files, final String[] files2) {
         Log.d(TAG, "checkFilenames");
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity);
-        boolean hdr_save_expo =  sharedPreferences.getBoolean(PreferenceKeys.HDRSaveExpoPreferenceKey, false);
+        boolean hdr_save_expo = sharedPreferences.getBoolean(PreferenceKeys.HDRSaveExpoPreferenceKey, false);
         boolean is_hdr = mActivity.supportsHDR() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_hdr");
         boolean is_fast_burst = mActivity.supportsFastBurst() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_fast_burst");
         boolean is_expo = mActivity.supportsExpoBracketing() && sharedPreferences.getString(PreferenceKeys.PhotoModePreferenceKey, "preference_photo_mode_std").equals("preference_photo_mode_expo_bracketing");
@@ -3459,77 +3438,71 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         String filename_jpeg = null;
         String filename_dng = null;
         int n_files = files == null ? 0 : files.length;
-        for(String file : files2) {
+        for (String file : files2) {
             Log.d(TAG, "check file: " + file);
             boolean is_new = true;
-            for(int j=0;j<n_files && is_new;j++) {
-                if( file.equals( files[j] ) ) {
+            for (int j = 0; j < n_files && is_new; j++) {
+                if (file.equals(files[j])) {
                     is_new = false;
                     break;
                 }
             }
-            if( is_new ) {
+            if (is_new) {
                 Log.d(TAG, "file is new");
                 //String filename = file.getName();
                 //noinspection UnnecessaryLocalVariable
                 String filename = file;
                 assertTrue(filename.startsWith("IMG_"));
-                if( filename.endsWith(".jpg") ) {
+                if (filename.endsWith(".jpg")) {
                     assertTrue(hdr_save_expo || is_expo || is_focus_bracketing || is_fast_burst || filename_jpeg == null);
-                    if( is_hdr && hdr_save_expo ) {
+                    if (is_hdr && hdr_save_expo) {
                         // only look for the "_HDR" image
-                        if( filename.contains("_HDR") )
+                        if (filename.contains("_HDR"))
                             filename_jpeg = filename;
-                    }
-                    else if( is_expo || is_focus_bracketing ) {
-                        if( filename_jpeg != null ) {
+                    } else if (is_expo || is_focus_bracketing) {
+                        if (filename_jpeg != null) {
                             // check same root
                             int last_underscore_jpeg = filename_jpeg.lastIndexOf('_');
                             assertTrue(last_underscore_jpeg != -1);
-                            String filename_base_jpeg = filename_jpeg.substring(0, last_underscore_jpeg+1);
+                            String filename_base_jpeg = filename_jpeg.substring(0, last_underscore_jpeg + 1);
 
                             int last_underscore = filename.lastIndexOf('_');
                             assertTrue(last_underscore != -1);
-                            String filename_base = filename.substring(0, last_underscore+1);
+                            String filename_base = filename.substring(0, last_underscore + 1);
                             Log.d(TAG, "filename_base: " + filename_base);
 
                             assertEquals(filename_base_jpeg, filename_base);
                         }
                         filename_jpeg = filename; // store the last name, to match mActivity.test_last_saved_image
-                    }
-                    else {
+                    } else {
                         filename_jpeg = filename;
                     }
-                }
-                else if( filename.endsWith(".dng") ) {
+                } else if (filename.endsWith(".dng")) {
                     assertTrue(is_raw);
                     assertTrue(hdr_save_expo || is_expo || is_focus_bracketing || filename_dng == null);
                     filename_dng = filename;
-                }
-                else {
+                } else {
                     fail();
                 }
             }
         }
         assertEquals((filename_jpeg == null), (is_raw && mActivity.getApplicationInterface().isRawOnly() && !is_hdr));
         assertEquals((filename_dng != null), is_raw);
-        if( is_raw && !mActivity.getApplicationInterface().isRawOnly() ) {
+        if (is_raw && !mActivity.getApplicationInterface().isRawOnly()) {
             // check we have same filenames (ignoring extensions)
             // if HDR, then we should exclude the "_HDR" vs "_x" of the base filenames
             // if expo, then exclude the "_x" as values may be different due to different order of JPEG vs DNG files in the files2 array (at least on Galaxy S10e)
             String filename_base_jpeg;
             String filename_base_dng;
-            if( is_hdr ) {
-                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length()-7);
-                filename_base_dng = filename_dng.substring(0, filename_dng.length()-5);
-            }
-            else if( is_expo ) {
-                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length()-5);
-                filename_base_dng = filename_dng.substring(0, filename_dng.length()-5);
-            }
-            else {
-                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length()-4);
-                filename_base_dng = filename_dng.substring(0, filename_dng.length()-4);
+            if (is_hdr) {
+                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length() - 7);
+                filename_base_dng = filename_dng.substring(0, filename_dng.length() - 5);
+            } else if (is_expo) {
+                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length() - 5);
+                filename_base_dng = filename_dng.substring(0, filename_dng.length() - 5);
+            } else {
+                filename_base_jpeg = filename_jpeg.substring(0, filename_jpeg.length() - 4);
+                filename_base_dng = filename_dng.substring(0, filename_dng.length() - 4);
             }
             Log.d(TAG, "filename_base_jpeg: " + filename_base_jpeg);
             Log.d(TAG, "filename_base_dng: " + filename_base_dng);
@@ -3537,37 +3510,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    private enum UriType {
-        MEDIASTORE_IMAGES,
-        MEDIASTORE_VIDEOS,
-        STORAGE_ACCESS_FRAMEWORK
-    }
-
-    /** Returns an array of filenames (not including full path)  of images or videos in the current
-     *  save folder, by querying the media store; or by using storage access framework on the
-     *  supplied uri.
+    /**
+     * Returns an array of filenames (not including full path)  of images or videos in the current
+     * save folder, by querying the media store; or by using storage access framework on the
+     * supplied uri.
      */
     private List<String> mediaFilesinSaveFolder(Uri baseUri, String bucket_id, UriType uri_type) {
         List<String> files = new ArrayList<>();
         final int column_name_c = 0; // filename (without path), including extension
 
-        String [] projection;
-        switch( uri_type ) {
+        String[] projection;
+        switch (uri_type) {
             case MEDIASTORE_IMAGES:
-                projection = new String[] {MediaStore.Images.ImageColumns.DISPLAY_NAME};
+                projection = new String[]{MediaStore.Images.ImageColumns.DISPLAY_NAME};
                 break;
             case MEDIASTORE_VIDEOS:
-                projection = new String[] {MediaStore.Video.VideoColumns.DISPLAY_NAME};
+                projection = new String[]{MediaStore.Video.VideoColumns.DISPLAY_NAME};
                 break;
             case STORAGE_ACCESS_FRAMEWORK:
-                projection = new String[] {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
+                projection = new String[]{DocumentsContract.Document.COLUMN_DISPLAY_NAME};
                 break;
             default:
                 throw new RuntimeException("unknown uri_type: " + uri_type);
         }
 
         String selection = "";
-        switch( uri_type ) {
+        switch (uri_type) {
             case MEDIASTORE_IMAGES:
                 selection = MediaStore.Images.ImageColumns.BUCKET_ID + " = " + bucket_id;
                 break;
@@ -3582,89 +3550,85 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "selection: " + selection);
 
         Cursor cursor = mActivity.getContentResolver().query(baseUri, projection, selection, null, null);
-        if( cursor != null && cursor.moveToFirst() ) {
+        if (cursor != null && cursor.moveToFirst()) {
             Log.d(TAG, "found: " + cursor.getCount());
 
             do {
                 String name = cursor.getString(column_name_c);
                 files.add(name);
             }
-            while( cursor.moveToNext() );
+            while (cursor.moveToNext());
         }
 
-        if( cursor != null ) {
+        if (cursor != null) {
             cursor.close();
         }
 
         return files;
     }
 
-    /** Returns an array of filenames (not including full path) in the current save folder.
+    /**
+     * Returns an array of filenames (not including full path) in the current save folder.
      */
-    private String [] filesInSaveFolder() {
+    private String[] filesInSaveFolder() {
         Log.d(TAG, "filesInSaveFolder");
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             List<String> files = new ArrayList<>();
-            if( mActivity.getStorageUtils().isUsingSAF() ) {
+            if (mActivity.getStorageUtils().isUsingSAF()) {
                 // See documentation for StorageUtils.getLatestMediaSAF() - for some reason with scoped storage when not having READ_EXTERNAL_STORAGE,
                 // we can't query the mediastore for files saved via SAF!
                 Uri treeUri = mActivity.getStorageUtils().getTreeUriSAF();
                 Uri baseUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri));
-                files.addAll( mediaFilesinSaveFolder(baseUri, null, UriType.STORAGE_ACCESS_FRAMEWORK) );
-            }
-            else {
+                files.addAll(mediaFilesinSaveFolder(baseUri, null, UriType.STORAGE_ACCESS_FRAMEWORK));
+            } else {
                 String save_folder = mActivity.getStorageUtils().getImageFolderPath();
                 String bucket_id = String.valueOf(save_folder.toLowerCase().hashCode());
-                files.addAll( mediaFilesinSaveFolder(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, bucket_id, UriType.MEDIASTORE_IMAGES) );
-                files.addAll( mediaFilesinSaveFolder(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, bucket_id, UriType.MEDIASTORE_VIDEOS) );
+                files.addAll(mediaFilesinSaveFolder(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, bucket_id, UriType.MEDIASTORE_IMAGES));
+                files.addAll(mediaFilesinSaveFolder(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, bucket_id, UriType.MEDIASTORE_VIDEOS));
             }
 
-            if( files.size() == 0 ) {
+            if (files.size() == 0) {
                 return null;
-            }
-            else {
+            } else {
                 return files.toArray(new String[0]);
             }
-        }
-        else {
+        } else {
             File folder = mActivity.getImageFolder();
-            File [] files = folder.listFiles();
-            if( files == null )
+            File[] files = folder.listFiles();
+            if (files == null)
                 return null;
-            String [] filenames = new String[files.length];
-            for(int i=0;i<files.length;i++) {
+            String[] filenames = new String[files.length];
+            for (int i = 0; i < files.length; i++) {
                 filenames[i] = files[i].getName();
             }
             return filenames;
         }
     }
 
-    private void checkFilesAfterTakePhoto(final boolean is_raw, final boolean test_wait_capture_result, final String [] files, final String suffix, final int max_time_s, final Date date) throws InterruptedException {
+    private void checkFilesAfterTakePhoto(final boolean is_raw, final boolean test_wait_capture_result, final String[] files, final String suffix, final int max_time_s, final Date date) throws InterruptedException {
         int n_files = files == null ? 0 : files.length;
-        String [] files2 = filesInSaveFolder();
+        String[] files2 = filesInSaveFolder();
         int n_new_files = (files2 == null ? 0 : files2.length) - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
         int exp_n_new_files = getExpNNewFiles(is_raw);
         assertEquals(n_new_files, exp_n_new_files);
         checkFilenames(is_raw, files, files2);
         Thread.sleep(1500); // wait until we've scanned
-        if( test_wait_capture_result ) {
+        if (test_wait_capture_result) {
             // if test_wait_capture_result, then it may take longer before we've scanned
-        }
-        else {
+        } else {
             Log.d(TAG, "failed to scan: " + mActivity.getStorageUtils().failed_to_scan);
             assertFalse(mActivity.getStorageUtils().failed_to_scan);
         }
 
-        if( !mActivity.getApplicationInterface().isRawOnly() ) {
+        if (!mActivity.getApplicationInterface().isRawOnly()) {
             String saved_image_filename;
-            if( MainActivity.useScopedStorage() || mActivity.getStorageUtils().isUsingSAF() ) {
+            if (MainActivity.useScopedStorage() || mActivity.getStorageUtils().isUsingSAF()) {
                 /*assertNotNull(mActivity.test_last_saved_imagename);
                 saved_image_filename = mActivity.test_last_saved_imagename;*/
                 assertNotNull(mActivity.test_last_saved_imageuri);
                 saved_image_filename = mActivity.getStorageUtils().getFileName(mActivity.test_last_saved_imageuri);
-            }
-            else {
+            } else {
                 assertNotNull(mActivity.test_last_saved_image);
                 File saved_image_file = new File(mActivity.test_last_saved_image);
                 saved_image_filename = saved_image_file.getName();
@@ -3675,12 +3639,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertTrue(expected_filename.equals(saved_image_file.getName()) || expected_filename1.equals(saved_image_file.getName()));*/
             // allow for possibility that the time has passed since taking the photo
             boolean matched = false;
-            for(int i=0;i<=max_time_s && !matched;i++) {
-                Date test_date = new Date(date.getTime() - 1000*i);
+            for (int i = 0; i <= max_time_s && !matched; i++) {
+                Date test_date = new Date(date.getTime() - 1000 * i);
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(test_date);
                 String expected_filename = "IMG_" + timeStamp + suffix + ".jpg";
                 Log.d(TAG, "expected name: " + expected_filename);
-                if( expected_filename.equals(saved_image_filename) )
+                if (expected_filename.equals(saved_image_filename))
                     matched = true;
             }
             assertTrue(matched);
@@ -3702,8 +3666,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View shareButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.share);
 
         // trash/share only shown when preview is paused after taking a photo
-        boolean pause_preview =  sharedPreferences.getBoolean(PreferenceKeys.PausePreviewPreferenceKey, false);
-        if( pause_preview ) {
+        boolean pause_preview = sharedPreferences.getBoolean(PreferenceKeys.PausePreviewPreferenceKey, false);
+        if (pause_preview) {
             assertFalse(mPreview.isPreviewStarted());
             assertEquals(switchCameraButton.getVisibility(), View.GONE);
             assertEquals(switchMultiCameraButton.getVisibility(), View.GONE);
@@ -3714,13 +3678,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(popupButton.getVisibility(), View.GONE);
             assertEquals(trashButton.getVisibility(), View.VISIBLE);
             assertEquals(shareButton.getVisibility(), View.VISIBLE);
-        }
-        else {
+        } else {
             assertTrue(mPreview.isPreviewStarted()); // check preview restarted
             assertEquals(switchCameraButton.getVisibility(), (mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ? View.VISIBLE : View.GONE));
             assertEquals(switchMultiCameraButton.getVisibility(), (mActivity.showSwitchMultiCamIcon() ? View.VISIBLE : View.GONE));
             assertEquals(switchVideoButton.getVisibility(), View.VISIBLE);
-            if( !immersive_mode ) {
+            if (!immersive_mode) {
                 assertEquals(exposureButton.getVisibility(), exposureVisibility);
                 assertEquals(exposureLockButton.getVisibility(), exposureLockVisibility);
             }
@@ -3757,7 +3720,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int saved_count_cameraTakePicture = mPreview.count_cameraTakePicture;
 
         // count initial files in folder
-        String [] files = filesInSaveFolder();
+        String[] files = filesInSaveFolder();
         int n_files = files == null ? 0 : files.length;
         Log.d(TAG, "n_files at start: " + n_files);
 
@@ -3787,19 +3750,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         boolean can_auto_focus = false;
         boolean manual_can_auto_focus = false;
         boolean can_focus_area = false;
-        if( focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") ) {
+        if (focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro")) {
             can_auto_focus = true;
         }
 
-        if( focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") ) {
+        if (focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro")) {
             manual_can_auto_focus = true;
-        }
-        else if( focus_value.equals("focus_mode_continuous_picture") && !single_tap_photo ) {
+        } else if (focus_value.equals("focus_mode_continuous_picture") && !single_tap_photo) {
             // if single_tap_photo and continuous mode, we go straight to taking a photo rather than doing a touch to focus
             manual_can_auto_focus = true;
         }
 
-        if( mPreview.getMaxNumFocusAreas() != 0 && ( focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") || focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video") || focus_value.equals("focus_mode_manual2") ) ) {
+        if (mPreview.getMaxNumFocusAreas() != 0 && (focus_value.equals("focus_mode_auto") || focus_value.equals("focus_mode_macro") || focus_value.equals("focus_mode_continuous_picture") || focus_value.equals("focus_mode_continuous_video") || focus_value.equals("focus_mode_manual2"))) {
             can_focus_area = true;
         }
         Log.d(TAG, "focus_value? " + focus_value);
@@ -3813,14 +3775,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int saved_thumbnail_count = mActivity.getApplicationInterface().getDrawPreview().test_thumbnail_anim_count;
         Log.d(TAG, "saved_thumbnail_count: " + saved_thumbnail_count);
 
-        if( touch_to_focus ) {
+        if (touch_to_focus) {
             subTestTouchToFocus(wait_after_focus, single_tap_photo, double_tap_photo, manual_can_auto_focus, can_focus_area, focus_value, focus_value_ui);
         }
         Log.d(TAG, "saved count_cameraAutoFocus: " + saved_count);
 
-        if( !single_tap_photo && !double_tap_photo ) {
+        if (!single_tap_photo && !double_tap_photo) {
             View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
-            assertFalse( mActivity.hasThumbnailAnimation() );
+            assertFalse(mActivity.hasThumbnailAnimation());
             Log.d(TAG, "about to click take photo");
             clickView(takePhotoButton);
             Log.d(TAG, "done clicking take photo");
@@ -3831,37 +3793,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Date date = new Date();
         String suffix = "";
         int max_time_s = 2;
-        if( is_dro ) {
+        if (is_dro) {
             suffix = "_DRO";
-        }
-        else if( is_hdr ) {
+        } else if (is_hdr) {
             suffix = "_HDR";
-        }
-        else if( is_nr ) {
+        } else if (is_nr) {
             suffix = "_NR";
-            if( mActivity.getApplicationInterface().getNRModePref() == MyApplicationInterface.NRModePref.NRMODE_LOW_LIGHT )
+            if (mActivity.getApplicationInterface().getNRModePref() == MyApplicationInterface.NRModePref.NRMODE_LOW_LIGHT)
                 max_time_s += 4; // takes longer to save low light photo
-        }
-        else if( is_expo ) {
-            suffix = "_" + (n_expo_images-1);
-        }
-        else if( is_focus_bracketing ) {
-            suffix = "_" + (n_focus_bracketing_images-1); // when focus bracketing starts from _0
+        } else if (is_expo) {
+            suffix = "_" + (n_expo_images - 1);
+        } else if (is_focus_bracketing) {
+            suffix = "_" + (n_focus_bracketing_images - 1); // when focus bracketing starts from _0
             //suffix = "_" + (n_focus_bracketing_images); // when focus bracketing starts from _1
             max_time_s = 60; // can take much longer to save in focus bracketing mode!
-        }
-        else if( is_fast_burst ) {
-            suffix = "_" + (n_fast_burst_images-1); // when burst numbering starts from _0
+        } else if (is_fast_burst) {
+            suffix = "_" + (n_fast_burst_images - 1); // when burst numbering starts from _0
             //suffix = "_" + (n_fast_burst_images); // when burst numbering starts from _1
             max_time_s = 4; // takes longer to save 20 images!
         }
 
-        if( is_raw ) {
+        if (is_raw) {
             max_time_s += 6; // extra time needed for Nexus 6 at least
         }
 
-        boolean pause_preview =  sharedPreferences.getBoolean(PreferenceKeys.PausePreviewPreferenceKey, false);
-        if( pause_preview ) {
+        boolean pause_preview = sharedPreferences.getBoolean(PreferenceKeys.PausePreviewPreferenceKey, false);
+        if (pause_preview) {
             max_time_s += 3; // need to allow longer for testTakePhotoRawWaitCaptureResult with Nexus 6 at least
         }
 
@@ -3875,22 +3832,22 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         else if( is_focus_bracketing ) {
             // thumbnail animation may have already occurred (e.g., see testTakePhotoFocusBracketingHeavy()
         }
-        else*/ if( has_thumbnail_anim ) {
+        else*/
+        if (has_thumbnail_anim) {
             long time_s = System.currentTimeMillis();
             //while( !mActivity.hasThumbnailAnimation() ) {
-            while( mActivity.getApplicationInterface().getDrawPreview().test_thumbnail_anim_count <= saved_thumbnail_count ) {
+            while (mActivity.getApplicationInterface().getDrawPreview().test_thumbnail_anim_count <= saved_thumbnail_count) {
                 Log.d(TAG, "waiting for thumbnail animation: " + mActivity.getApplicationInterface().getDrawPreview().test_thumbnail_anim_count + " vs " + saved_thumbnail_count);
                 Thread.sleep(10);
                 int allowed_time_ms = 10000;
-                if( is_hdr || is_nr || is_expo ) {
+                if (is_hdr || is_nr || is_expo) {
                     // some devices need longer time (especially Nexus 6)
                     allowed_time_ms = 16000;
                 }
-                assertTrue( System.currentTimeMillis() - time_s < allowed_time_ms );
+                assertTrue(System.currentTimeMillis() - time_s < allowed_time_ms);
             }
-        }
-        else {
-            assertFalse( mActivity.hasThumbnailAnimation() );
+        } else {
+            assertFalse(mActivity.hasThumbnailAnimation());
             assertEquals(saved_thumbnail_count, mActivity.getApplicationInterface().getDrawPreview().test_thumbnail_anim_count);
         }
         mActivity.waitUntilImageQueueEmpty();
@@ -3913,13 +3870,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, false, false);
     }
 
-    /** Test taking photo with JPEG + DNG (RAW).
+    /**
+     * Test taking photo with JPEG + DNG (RAW).
      */
     public void testTakePhotoRaw() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRaw");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -3931,13 +3889,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, true, false);
     }
 
-    /** Test taking photo with JPEG + DNG (RAW), with test_wait_capture_result.
+    /**
+     * Test taking photo with JPEG + DNG (RAW), with test_wait_capture_result.
      */
     public void testTakePhotoRawWaitCaptureResult() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawWaitCaptureResult");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -3957,13 +3916,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, true, true);
     }
 
-    /** Test taking multiple RAW photos.
+    /**
+     * Test taking multiple RAW photos.
      */
     public void testTakePhotoRawMulti() {
         Log.d(TAG, "testTakePhotoRawMulti");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -3978,7 +3938,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         int start_count = mPreview.count_cameraTakePicture;
         final int n_photos = 5;
-        for(int i=0;i<n_photos;i++) {
+        for (int i = 0; i < n_photos; i++) {
             View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
             Log.d(TAG, "about to click take photo count: " + i);
             clickView(takePhotoButton);
@@ -3999,13 +3959,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(n_new_files, 2 * n_photos); // if we fail here, be careful we haven't lost images (i.e., waitUntilImageQueueEmpty() returns before all images are saved)
     }
 
-    /** Test taking photo with JPEG + DNG (RAW) and repeat mode.
+    /**
+     * Test taking photo with JPEG + DNG (RAW) and repeat mode.
      */
     public void testTakePhotoRawRepeat() {
         Log.d(TAG, "testTakePhotoRawRepeat");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -4032,9 +3993,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // wait until photos taken
         // wait, and test that we've taken the photos by then
         long time_s = System.currentTimeMillis();
-        while( mPreview.count_cameraTakePicture < n_repeat ) {
+        while (mPreview.count_cameraTakePicture < n_repeat) {
             // Nexus 6 needs a lot more time than OnePlus 3T or Nokia 8! Needs more like 50s rather than 22s.
-            assertTrue( System.currentTimeMillis() - time_s < 52000 );
+            assertTrue(System.currentTimeMillis() - time_s < 52000);
         }
         // since we're in repeat mode, the original waitForTakePhoto() call above will only have waited for the first photo
         Log.d(TAG, "wait until finished taking final photo");
@@ -4052,13 +4013,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(n_new_files, 2 * n_repeat); // if we fail here, be careful we haven't lost images (i.e., waitUntilImageQueueEmpty() returns before all images are saved)
     }
 
-    /** Test taking photo with DNG (RAW) only.
+    /**
+     * Test taking photo with DNG (RAW) only.
      */
     public void testTakePhotoRawOnly() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawOnly");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -4078,7 +4040,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // switch to video mode
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -4088,21 +4050,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // check auto-stabilise mode now available (since it'll apply to the snapshots, which are always JPEG)
         assertEquals(mActivity.supportsAutoStabilise(), supports_auto_stabilise);
 
-        if( !mPreview.supportsPhotoVideoRecording() ) {
+        if (!mPreview.supportsPhotoVideoRecording()) {
             Log.d(TAG, "video snapshot not supported");
-        }
-        else {
+        } else {
             subTestTakeVideoSnapshot();
         }
     }
 
-    /** Test taking photo with JPEG + DNG (RAW) in Expo photo mode.
+    /**
+     * Test taking photo with JPEG + DNG (RAW) in Expo photo mode.
      */
     public void testTakePhotoRawExpo() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawExpo");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -4113,19 +4075,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         updateForSettings();
 
         subTestTakePhoto(false, false, true, true, false, false, true, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Test taking photo with JPEG + DNG (RAW) in Expo photo mode, with test_wait_capture_result.
+    /**
+     * Test taking photo with JPEG + DNG (RAW) in Expo photo mode, with test_wait_capture_result.
      */
     public void testTakePhotoRawExpoWaitCaptureResult() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawExpoWaitCaptureResult");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -4137,19 +4100,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         mPreview.getCameraController().test_wait_capture_result = true;
         subTestTakePhoto(false, false, true, true, false, false, true, true);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Test taking photo with DNG (RAW) only in Expo photo mode.
+    /**
+     * Test taking photo with DNG (RAW) only in Expo photo mode.
      */
     public void testTakePhotoRawOnlyExpo() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawOnlyExpo");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -4181,9 +4145,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, false, false);
     }
 
-    /** Test taking photo with continuous photo mode.
-     *  Touching to focus will mean the photo is taken whilst the camera controller is actually
-     *  in autofocus mode.
+    /**
+     * Test taking photo with continuous photo mode.
+     * Touching to focus will mean the photo is taken whilst the camera controller is actually
+     * in autofocus mode.
      */
     public void testTakePhotoContinuous() throws InterruptedException {
         Log.d(TAG, "testTakePhotoContinuous");
@@ -4194,8 +4159,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(0, mPreview.getCameraController().test_af_state_null_focus);
     }
 
-    /** Test taking photo with continuous photo mode. Don't touch to focus first, so we take the
-     *  photo in continuous focus mode.
+    /**
+     * Test taking photo with continuous photo mode. Don't touch to focus first, so we take the
+     * photo in continuous focus mode.
      */
     public void testTakePhotoContinuousNoTouch() throws InterruptedException {
         Log.d(TAG, "testTakePhotoContinuousNoTouch");
@@ -4206,43 +4172,45 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(0, mPreview.getCameraController().test_af_state_null_focus);
     }
 
-    /**  May have precapture timeout if phone is face down and devices uses fake flash by default (e.g., OnePlus 3T) - see testTakePhotoFlashOnFakeMode.
+    /**
+     * May have precapture timeout if phone is face down and devices uses fake flash by default (e.g., OnePlus 3T) - see testTakePhotoFlashOnFakeMode.
      */
     public void testTakePhotoFlashAuto() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFlashAuto");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
         switchToFlashValue("flash_auto");
         Thread.sleep(2000); // wait so we don't take the photo immediately, to be more realistic
         subTestTakePhoto(false, false, false, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
     }
 
-    /**  May have precapture timeout if phone is face down and devices uses fake flash by default (e.g., OnePlus 3T) - see testTakePhotoFlashOnFakeMode.
+    /**
+     * May have precapture timeout if phone is face down and devices uses fake flash by default (e.g., OnePlus 3T) - see testTakePhotoFlashOnFakeMode.
      */
     public void testTakePhotoFlashOn() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFlashOn");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
         switchToFlashValue("flash_on");
         Thread.sleep(2000); // wait so we don't take the photo immediately, to be more realistic
         subTestTakePhoto(false, false, false, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
     }
 
     public void testTakePhotoFlashTorch() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFlashTorch");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -4251,20 +4219,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, false, false, false, false, false, false);
     }
 
-    /** Tests the "fake" flash mode. Important to do this even for devices where standard Camera2 flash work fine, as we use
-     *  fake flash for modes like HDR (plus it's good to still test the fake flash mode on as many devices as possible).
-     *  We do more tests with flash on than flash auto (especially due to bug on OnePlus 3T where fake flash auto never fires the flash
-     *  anyway).
-     *  May have precapture timeout if phone is face down, see note for testTakePhotoFlashOnFakeMode.
+    /**
+     * Tests the "fake" flash mode. Important to do this even for devices where standard Camera2 flash work fine, as we use
+     * fake flash for modes like HDR (plus it's good to still test the fake flash mode on as many devices as possible).
+     * We do more tests with flash on than flash auto (especially due to bug on OnePlus 3T where fake flash auto never fires the flash
+     * anyway).
+     * May have precapture timeout if phone is face down, see note for testTakePhotoFlashOnFakeMode.
      */
     public void testTakePhotoFlashAutoFakeMode() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFlashAutoFakeMode");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
         }
 
@@ -4277,32 +4246,33 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToFlashValue("flash_auto");
         switchToFocusValue("focus_mode_auto");
         Thread.sleep(2000); // wait so we don't take the photo immediately, to be more realistic
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, false, false, false, false, false, false);
 
         // now test continuous focus mode
         Thread.sleep(1000);
         switchToFocusValue("focus_mode_continuous_picture");
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, false, false, false, false, false, false);
     }
 
-    /** Tests the "fake" flash mode. Important to do this even for devices where standard Camera2 flash work fine, as we use
-     *  fake flash for modes like HDR (plus it's good to still test the fake flash mode on as many devices as possible).
-     *  We do more tests with flash on than flash auto (especially due to bug on OnePlus 3T where fake flash auto never fires the flash
-     *  anyway).
-     *  May have precapture timeout if phone is face down (at least on Nexus 6 and OnePlus 3T) - issue that we've already ae converged,
-     *  so we think fake-precapture never starts when firing the flash for taking photo. I think this is when being face down means that
-     *  although flash fires, it doesn't light up the picture.
+    /**
+     * Tests the "fake" flash mode. Important to do this even for devices where standard Camera2 flash work fine, as we use
+     * fake flash for modes like HDR (plus it's good to still test the fake flash mode on as many devices as possible).
+     * We do more tests with flash on than flash auto (especially due to bug on OnePlus 3T where fake flash auto never fires the flash
+     * anyway).
+     * May have precapture timeout if phone is face down (at least on Nexus 6 and OnePlus 3T) - issue that we've already ae converged,
+     * so we think fake-precapture never starts when firing the flash for taking photo. I think this is when being face down means that
+     * although flash fires, it doesn't light up the picture.
      */
     public void testTakePhotoFlashOnFakeMode() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFlashOnFakeMode");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
         }
 
@@ -4315,27 +4285,27 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToFocusValue("focus_mode_auto");
         switchToFlashValue("flash_on");
         Thread.sleep(2000); // wait so we don't take the photo immediately, to be more realistic
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, false, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         assertEquals(1, mPreview.getCameraController().test_fake_flash_focus);
         assertEquals(1, mPreview.getCameraController().test_fake_flash_precapture);
         assertEquals(1, mPreview.getCameraController().test_fake_flash_photo);
 
         // now test doing autofocus, waiting, then taking photo
         Thread.sleep(1000);
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         assertEquals(2, mPreview.getCameraController().test_fake_flash_focus);
         assertEquals(2, mPreview.getCameraController().test_fake_flash_precapture);
         assertEquals(2, mPreview.getCameraController().test_fake_flash_photo);
 
         // now test doing autofocus, then taking photo immediately
         Thread.sleep(1000);
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, true, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         Log.d(TAG, "test_fake_flash_focus: " + mPreview.getCameraController().test_fake_flash_focus);
         assertEquals(3, mPreview.getCameraController().test_fake_flash_focus);
         assertEquals(3, mPreview.getCameraController().test_fake_flash_precapture);
@@ -4349,9 +4319,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // now test it all again with continuous focus mode
         switchToFocusValue("focus_mode_continuous_picture");
         Thread.sleep(1000);
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, false, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         Log.d(TAG, "test_fake_flash_focus: " + mPreview.getCameraController().test_fake_flash_focus);
         assertEquals(mPreview.getCameraController().test_fake_flash_focus, (do_af_for_continuous ? 4 : 3));
         assertEquals(4, mPreview.getCameraController().test_fake_flash_precapture);
@@ -4359,18 +4329,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // now test doing autofocus, waiting, then taking photo
         Thread.sleep(1000);
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         assertEquals(mPreview.getCameraController().test_fake_flash_focus, (do_af_for_continuous ? 5 : 4));
         assertEquals(5, mPreview.getCameraController().test_fake_flash_precapture);
         assertEquals(5, mPreview.getCameraController().test_fake_flash_photo);
 
         // now test doing autofocus, then taking photo immediately
         Thread.sleep(1000);
-        assertTrue( mPreview.getCameraController().getUseCamera2FakeFlash() ); // make sure we turned on the option in the camera controller
+        assertTrue(mPreview.getCameraController().getUseCamera2FakeFlash()); // make sure we turned on the option in the camera controller
         subTestTakePhoto(false, false, true, false, false, false, false, false);
-        assertTrue( mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0 );
+        assertTrue(mPreview.getCameraController() == null || mPreview.getCameraController().count_precapture_timeout == 0);
         assertEquals(mPreview.getCameraController().test_fake_flash_focus, (do_af_for_continuous ? 6 : 5));
         assertEquals(6, mPreview.getCameraController().test_fake_flash_precapture);
         assertEquals(6, mPreview.getCameraController().test_fake_flash_photo);
@@ -4431,7 +4401,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoFlashBug");
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -4439,10 +4409,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, false, false, false, false, false);
     }
 
-    /** Tests cycling through cameras with the multi-camera icon.
+    /**
+     * Tests cycling through cameras with the multi-camera icon.
      */
     private void subTestCycleMultiCameras(Set<Integer> camera_ids) throws InterruptedException {
-        if( mActivity.showSwitchMultiCamIcon() ) {
+        if (mActivity.showSwitchMultiCamIcon()) {
             int cameraId = mPreview.getCameraId();
             CameraController.Facing facing = mPreview.getCameraControllerManager().getFacing(cameraId);
 
@@ -4464,13 +4435,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 subTestTakePhoto(false, false, true, true, false, false, false, false);
             }
-            while( mActivity.getNextMultiCameraId() != cameraId );
+            while (mActivity.getNextMultiCameraId() != cameraId);
         }
     }
 
-    /** Tests taking a photo with multiple cameras.
-     *  Also tests the content descriptions for switch camera button.
-     *  And tests that we save the current camera when pausing and resuming.
+    /**
+     * Tests taking a photo with multiple cameras.
+     * Also tests the content descriptions for switch camera button.
+     * And tests that we save the current camera when pausing and resuming.
+     *
      * @param cycle_all_cameras If true, expect that the Switch Camera icon cycles through all
      *                          cameras.
      * @param test_multi_cam    If true, also test cycling through cameras using the switch multi
@@ -4481,11 +4454,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "subTestTakePhotoMultiCameras");
 
         int n_cameras = mPreview.getCameraControllerManager().getNumberOfCameras();
-        if( n_cameras <= 1 ) {
+        if (n_cameras <= 1) {
             return;
         }
 
-        if( test_multi_cam ) {
+        if (test_multi_cam) {
             assertFalse(cycle_all_cameras);
             assertTrue(mActivity.isMultiCamEnabled());
         }
@@ -4495,16 +4468,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         camera_ids.add(orig_cameraId);
 
         boolean done_front_test = false;
-        for(int i=0;i<(cycle_all_cameras ? n_cameras-1 : 1);i++) {
+        for (int i = 0; i < (cycle_all_cameras ? n_cameras - 1 : 1); i++) {
             Log.d(TAG, "i: " + i);
             int cameraId = mPreview.getCameraId();
 
             CameraController.Facing facing = mPreview.getCameraControllerManager().getFacing(cameraId);
-            if( i == 0 ) {
+            if (i == 0) {
                 assertEquals(CameraController.Facing.FACING_BACK, facing);
             }
 
-            if( test_multi_cam ) {
+            if (test_multi_cam) {
                 // first test cycling through the cameras with this facing
                 subTestCycleMultiCameras(camera_ids);
             }
@@ -4516,7 +4489,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             int new_cameraId = mPreview.getCameraId();
             assertTrue(new_cameraId != cameraId);
-            if( cycle_all_cameras ) {
+            if (cycle_all_cameras) {
                 // in this mode, we should just be iterating over the camera IDs
                 assertEquals((cameraId + 1) % n_cameras, new_cameraId);
             }
@@ -4525,23 +4498,23 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             CameraController.Facing new_facing = mPreview.getCameraControllerManager().getFacing(new_cameraId);
             CharSequence new_contentDescription = switchCameraButton.getContentDescription();
-            if( n_cameras == 2 || !cycle_all_cameras ) {
-                assertEquals(facing==CameraController.Facing.FACING_BACK ? CameraController.Facing.FACING_FRONT : CameraController.Facing.FACING_BACK, new_facing);
+            if (n_cameras == 2 || !cycle_all_cameras) {
+                assertEquals(facing == CameraController.Facing.FACING_BACK ? CameraController.Facing.FACING_FRONT : CameraController.Facing.FACING_BACK, new_facing);
             }
 
             //int next_cameraId = (new_cameraId+1) % n_cameras;
             int next_cameraId = mActivity.getNextCameraId();
             assertTrue(next_cameraId != new_cameraId);
-            if( cycle_all_cameras ) {
+            if (cycle_all_cameras) {
                 // in this mode, we should just be iterating over the camera IDs
                 assertEquals((new_cameraId + 1) % n_cameras, next_cameraId);
             }
-            if( i==n_cameras-1 || !cycle_all_cameras ) {
+            if (i == n_cameras - 1 || !cycle_all_cameras) {
                 // should have returned to the start
                 assertEquals(cameraId, next_cameraId);
             }
             CameraController.Facing next_facing = mPreview.getCameraControllerManager().getFacing(next_cameraId);
-            if( n_cameras == 2 || !cycle_all_cameras ) {
+            if (n_cameras == 2 || !cycle_all_cameras) {
                 assertEquals(facing, next_facing);
             }
 
@@ -4554,7 +4527,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             Log.d(TAG, "next_cameraId: " + next_cameraId);
             Log.d(TAG, "next_facing: " + next_facing);
 
-            switch( new_facing ) {
+            switch (new_facing) {
                 case FACING_FRONT:
                     assertEquals(contentDescription, mActivity.getResources().getString(net.sourceforge.opencamera.R.string.switch_to_front_camera));
                     break;
@@ -4567,7 +4540,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 default:
                     fail();
             }
-            switch( next_facing ) {
+            switch (next_facing) {
                 case FACING_FRONT:
                     assertEquals(new_contentDescription, mActivity.getResources().getString(net.sourceforge.opencamera.R.string.switch_to_front_camera));
                     break;
@@ -4583,7 +4556,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             subTestTakePhoto(false, false, true, true, false, false, false, false);
 
-            if( !done_front_test && new_facing == CameraController.Facing.FACING_FRONT ) {
+            if (!done_front_test && new_facing == CameraController.Facing.FACING_FRONT) {
                 done_front_test = true;
 
                 // check still front camera after pause/resume
@@ -4593,7 +4566,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 CharSequence restart_contentDescription = switchCameraButton.getContentDescription();
                 Log.d(TAG, "restart_contentDescription: " + restart_contentDescription);
                 assertEquals(restart_cameraId, new_cameraId);
-                switch( next_facing ) {
+                switch (next_facing) {
                     case FACING_FRONT:
                         assertEquals(restart_contentDescription, mActivity.getResources().getString(net.sourceforge.opencamera.R.string.switch_to_front_camera));
                         break;
@@ -4623,11 +4596,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             }
         }
 
-        if( test_multi_cam ) {
+        if (test_multi_cam) {
             subTestCycleMultiCameras(camera_ids);
         }
 
-        if( cycle_all_cameras || test_multi_cam ) {
+        if (cycle_all_cameras || test_multi_cam) {
             // test we visited all cameras
             assertEquals(n_cameras, camera_ids.size());
         }
@@ -4652,7 +4625,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoFrontCameraAll");
         setToDefault();
 
-        if( mActivity.isMultiCamEnabled() ) {
+        if (mActivity.isMultiCamEnabled()) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PreferenceKeys.MultiCamButtonPreferenceKey, false);
@@ -4669,7 +4642,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoFrontCamera");
         setToDefault();
 
-        if( !mActivity.isMultiCamEnabled() ) {
+        if (!mActivity.isMultiCamEnabled()) {
             return; // no point running, as will be same as testTakePhotoFrontCameraAll
         }
 
@@ -4682,25 +4655,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoFrontCameraMulti");
         setToDefault();
 
-        if( !mActivity.isMultiCamEnabled() ) {
+        if (!mActivity.isMultiCamEnabled()) {
             return;
         }
 
         subTestTakePhotoMultiCameras(false, true);
     }
 
-    /** Tests taking a photo with front camera and screen flash.
-     *  Note this test fails on Android emulator with old camera API, because on front camera when
-     *  we switch from continuous to auto focus from touch to focus, we're still in continuous focus
-     *  mode, despite both focus modes being supported for front camera - I confirmed that we do
-     *  switch to auto focus, and haven't reset to continuous! Could be a threading/synchronization
-     *  issue from trying to read the camera parameters from the test thread?
+    /**
+     * Tests taking a photo with front camera and screen flash.
+     * Note this test fails on Android emulator with old camera API, because on front camera when
+     * we switch from continuous to auto focus from touch to focus, we're still in continuous focus
+     * mode, despite both focus modes being supported for front camera - I confirmed that we do
+     * switch to auto focus, and haven't reset to continuous! Could be a threading/synchronization
+     * issue from trying to read the camera parameters from the test thread?
      */
     public void testTakePhotoFrontCameraScreenFlash() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFrontCameraScreenFlash");
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
@@ -4723,7 +4697,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, false, false);
     }
 
-    /** Take a photo in auto focus mode.
+    /**
+     * Take a photo in auto focus mode.
      */
     public void testTakePhotoAutoFocus() throws InterruptedException {
         Log.d(TAG, "testTakePhotoAutoFocus");
@@ -4734,17 +4709,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(0, mPreview.getCameraController().test_af_state_null_focus);
     }
 
-    /** Take a photo for Camera2 API when camera is released on UI thread whilst photo is taken on background thread (via
-     *  autofocus callback).
+    /**
+     * Take a photo for Camera2 API when camera is released on UI thread whilst photo is taken on background thread (via
+     * autofocus callback).
      */
     public void testTakePhotoAutoFocusReleaseDuringPhoto() throws InterruptedException {
         Log.d(TAG, "testTakePhotoAutoFocusReleaseDuringPhoto");
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             Log.d(TAG, "test requires camera2 api");
             return;
         }
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             // if no focus, then the photo will be taken on th UI thread
             return;
         }
@@ -4755,7 +4731,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mPreview.getCameraController().test_release_during_photo = true;
 
         View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
-        assertFalse( mActivity.hasThumbnailAnimation() );
+        assertFalse(mActivity.hasThumbnailAnimation());
         Log.d(TAG, "about to click take photo");
         clickView(takePhotoButton);
         Log.d(TAG, "done clicking take photo");
@@ -4774,14 +4750,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakePhotoManualFocus");
         setToDefault();
 
-        if( !mPreview.supportsFocus() || !mPreview.getSupportedFocusValues().contains("focus_mode_manual2") ) {
+        if (!mPreview.supportsFocus() || !mPreview.getSupportedFocusValues().contains("focus_mode_manual2")) {
             return;
         }
         SeekBar seekBar = mActivity.findViewById(net.sourceforge.opencamera.R.id.focus_seekbar);
         assertEquals(seekBar.getVisibility(), View.GONE);
         switchToFocusValue("focus_mode_manual2");
         assertEquals(seekBar.getVisibility(), View.VISIBLE);
-        seekBar.setProgress( (int)(0.25*(seekBar.getMax()-1)) );
+        seekBar.setProgress((int) (0.25 * (seekBar.getMax() - 1)));
         subTestTakePhoto(false, false, true, true, false, false, false, false);
     }
 
@@ -4811,7 +4787,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakePhotoSAF() throws InterruptedException {
         Log.d(TAG, "testTakePhotoSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -4843,7 +4819,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testImmersiveMode() throws InterruptedException {
         Log.d(TAG, "testImmersiveMode");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             Log.d(TAG, "immersive mode requires Android Kitkat or better");
             return;
         }
@@ -4965,7 +4941,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(targetSeekBar.getVisibility(), View.GONE);
 
         // need to switch video before going back to immersive mode
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -5025,12 +5001,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(targetSeekBar.getVisibility(), View.GONE);
 
         // switch back to photo mode
-        if( mPreview.isVideo() ) {
+        if (mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
 
-        if( mPreview.usingCamera2API() && mPreview.supportsFocus() && mPreview.getSupportedFocusValues().contains("focus_mode_manual2")  ) {
+        if (mPreview.usingCamera2API() && mPreview.supportsFocus() && mPreview.getSupportedFocusValues().contains("focus_mode_manual2")) {
             // now test manual focus seekbar disappears
             assertEquals(seekBar.getVisibility(), View.GONE);
             switchToFocusValue("focus_mode_manual2");
@@ -5075,7 +5051,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             switchToFocusValue("focus_mode_continuous_picture");
         }
 
-        if( mPreview.usingCamera2API() && mActivity.supportsFocusBracketing()  ) {
+        if (mPreview.usingCamera2API() && mActivity.supportsFocusBracketing()) {
             // now test focus bracketing seekbars disappear
             assertEquals(seekBar.getVisibility(), View.GONE);
             assertEquals(targetSeekBar.getVisibility(), View.GONE);
@@ -5132,7 +5108,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             updateForSettings();
         }
 
-        if( mPreview.usingCamera2API() && mPreview.supportsISORange() ) {
+        if (mPreview.usingCamera2API() && mPreview.supportsISORange()) {
             // now test exposure button disappears when in manual ISO mode
             switchToISO(100);
 
@@ -5160,7 +5136,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testImmersiveModeEverything() throws InterruptedException {
         Log.d(TAG, "testImmersiveModeEverything");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             Log.d(TAG, "immersive mode requires Android Kitkat or better");
             return;
         }
@@ -5231,12 +5207,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(takePhotoVideoButton.getVisibility(), View.GONE);
     }
 
-    /** Tests the use of the FLAG_LAYOUT_NO_LIMITS flag introduced in 1.48.
+    /**
+     * Tests the use of the FLAG_LAYOUT_NO_LIMITS flag introduced in 1.48.
      */
     public void testLayoutNoLimits() throws InterruptedException {
         Log.d(TAG, "testLayoutNoLimits");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // we don't support FLAG_LAYOUT_NO_LIMITS
             return;
         }
@@ -5267,7 +5244,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(0, mActivity.getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         assertEquals(0, mActivity.getMainUI().test_navigation_gap);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             // test switching camera
             MainActivity.test_preview_want_no_limits_value = true;
             switchToCamera(1);
@@ -5306,12 +5283,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mActivity.getNavigationGap(), mActivity.getMainUI().test_navigation_gap);
     }
 
-    /** Tests the use of the FLAG_LAYOUT_NO_LIMITS flag introduced in 1.48, with the mode set from startup.
+    /**
+     * Tests the use of the FLAG_LAYOUT_NO_LIMITS flag introduced in 1.48, with the mode set from startup.
      */
     public void testLayoutNoLimitsStartup() throws InterruptedException {
         Log.d(TAG, "testLayoutNoLimitsStartup");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // we don't support FLAG_LAYOUT_NO_LIMITS
             return;
         }
@@ -5425,7 +5403,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(switchVideoButton.getVisibility(), View.VISIBLE);
         //assertTrue(flashButton.getVisibility() == flashVisibility);
         //assertTrue(focusButton.getVisibility() == focusVisibility);
-        if( !immersive_mode ) {
+        if (!immersive_mode) {
             assertEquals(exposureButton.getVisibility(), exposureVisibility);
             assertEquals(exposureLockButton.getVisibility(), exposureLockVisibility);
         }
@@ -5468,7 +5446,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakePhotoPreviewPausedSAF() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -5484,7 +5462,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPaused(false, false);
     }
 
-    /** Tests pause preview option.
+    /**
+     * Tests pause preview option.
+     *
      * @param share If true, share the image; else, trash it. A test with share==true should be the
      *              last test if run in a suite, as sharing the image may sometimes cause later
      *              tests to hang.
@@ -5565,7 +5545,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(trashButton.getVisibility(), View.VISIBLE);
         assertEquals(shareButton.getVisibility(), View.VISIBLE);
 
-        if( share ) {
+        if (share) {
             Log.d(TAG, "about to click share");
             clickView(shareButton);
             Log.d(TAG, "done click share");
@@ -5574,8 +5554,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             n_new_files = getNFiles() - n_files;
             Log.d(TAG, "n_new_files: " + n_new_files);
             assertEquals(n_new_files, exp_n_new_files);
-        }
-        else {
+        } else {
             Log.d(TAG, "about to click trash");
             clickView(trashButton);
             Log.d(TAG, "done click trash");
@@ -5613,13 +5592,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPausedShareTrash(false, false);
     }
 
-    /** Equivalent of testTakePhotoPreviewPausedTrash(), but for Storage Access Framework.
-     *  If this test fails, make sure we've manually selected that folder (as permission can't be given through the test framework).
+    /**
+     * Equivalent of testTakePhotoPreviewPausedTrash(), but for Storage Access Framework.
+     * If this test fails, make sure we've manually selected that folder (as permission can't be given through the test framework).
      */
     public void testTakePhotoPreviewPausedTrashSAF() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedTrashSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -5635,8 +5615,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPausedShareTrash(false, false);
     }
 
-    /** Like testTakePhotoPreviewPausedTrash() but taking 2 photos, only deleting the most recent - make
-     *  sure we don't delete both images!
+    /**
+     * Like testTakePhotoPreviewPausedTrash() but taking 2 photos, only deleting the most recent - make
+     * sure we don't delete both images!
      */
     public void testTakePhotoPreviewPausedTrash2() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedTrash2");
@@ -5649,13 +5630,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPausedShareTrash(false, false);
     }
 
-    /** Equivalent of testTakePhotoPreviewPausedTrash(), but with Raw enabled.
+    /**
+     * Equivalent of testTakePhotoPreviewPausedTrash(), but with Raw enabled.
      */
     public void testTakePhotoPreviewPausedTrashRaw() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedTrashRaw");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -5667,14 +5649,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPausedShareTrash(true, false);
     }
 
-    /** Take a photo with RAW that we keep, then take a photo without RAW that we delete, and ensure we
-     *  don't delete the previous RAW image!
+    /**
+     * Take a photo with RAW that we keep, then take a photo without RAW that we delete, and ensure we
+     * don't delete the previous RAW image!
      */
     public void testTakePhotoPreviewPausedTrashRaw2() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedTrashRaw2");
         setToDefault();
 
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -5696,8 +5679,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPreviewPausedShareTrash(false, false);
     }
 
-    /** Tests sharing an image. If run in a suite, this test should be last, as sharing the image
-     *  may sometimes cause later tests to hang.
+    /**
+     * Tests sharing an image. If run in a suite, this test should be last, as sharing the image
+     * may sometimes cause later tests to hang.
      */
     public void testTakePhotoPreviewPausedShare() throws InterruptedException {
         Log.d(TAG, "testTakePhotoPreviewPausedShare");
@@ -5721,15 +5705,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
         Log.d(TAG, "1 count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
 
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
             assertTrue(mPreview.hasFocusArea());
             assertNotNull(mPreview.getCameraController().getFocusAreas());
             assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
             assertNotNull(mPreview.getCameraController().getMeteringAreas());
             assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
-        }
-        else {
+        } else {
             assertEquals(mPreview.count_cameraAutoFocus, saved_count);
         }
 
@@ -5750,15 +5733,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // taking photo shouldn't have done an auto-focus, and still have focus areas
         Log.d(TAG, "2 count_cameraAutoFocus: " + mPreview.count_cameraAutoFocus);
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             assertEquals(mPreview.count_cameraAutoFocus, saved_count + 1);
             assertTrue(mPreview.hasFocusArea());
             assertNotNull(mPreview.getCameraController().getFocusAreas());
             assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
             assertNotNull(mPreview.getCameraController().getMeteringAreas());
             assertEquals(1, mPreview.getCameraController().getMeteringAreas().size());
-        }
-        else {
+        } else {
             assertEquals(mPreview.count_cameraAutoFocus, saved_count);
         }
 
@@ -5768,15 +5750,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void takePhotoRepeatFocus(boolean locked) throws InterruptedException {
         Log.d(TAG, "takePhotoRepeatFocus");
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
         setToDefault();
-        if( locked ) {
+        if (locked) {
             switchToFocusValue("focus_mode_locked");
-        }
-        else {
+        } else {
             switchToFocusValue("focus_mode_auto");
         }
 
@@ -5938,7 +5919,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "n_files at start: " + n_files);
 
         int start_count = mPreview.count_cameraTakePicture;
-        for(int i=0;i<count;i++) {
+        for (int i = 0; i < count; i++) {
             View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
             Log.d(TAG, "about to click take photo: " + i);
             clickView(takePhotoButton);
@@ -5974,10 +5955,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         final int n_photos_c = 5;
 
         takePhotoLoop(n_photos_c);
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
-            while( switchCameraButton.getVisibility() != View.VISIBLE ) {
+            while (switchCameraButton.getVisibility() != View.VISIBLE) {
                 // wait until photo is taken and button is visible again
             }
             clickView(switchCameraButton);
@@ -5985,7 +5966,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             int new_cameraId = mPreview.getCameraId();
             assertTrue(cameraId != new_cameraId);
             takePhotoLoop(n_photos_c);
-            while( switchCameraButton.getVisibility() != View.VISIBLE ) {
+            while (switchCameraButton.getVisibility() != View.VISIBLE) {
                 // wait until photo is taken and button is visible again
             }
 
@@ -6013,14 +5994,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoAutoLevel();
     }
 
-    private void takePhotoLoopAngles(int [] angles) {
+    private void takePhotoLoopAngles(int[] angles) {
         // count initial files in folder
         mActivity.test_have_angle = true;
         int n_files = getNFiles();
         Log.d(TAG, "n_files at start: " + n_files);
 
         int start_count = mPreview.count_cameraTakePicture;
-        for(int i=0;i<angles.length;i++) {
+        for (int i = 0; i < angles.length; i++) {
             mActivity.test_angle = angles[mPreview.count_cameraTakePicture - start_count];
             View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
             Log.d(TAG, "about to click take photo count: " + i);
@@ -6056,13 +6037,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertTrue(mPreview.isPreviewStarted());
         assertTrue(mActivity.getApplicationInterface().getDrawPreview().getStoredAutoStabilisePref());
-        final int [] angles = new int[]{0, -129, 30, -44, 61, -89, 179};
+        final int[] angles = new int[]{0, -129, 30, -44, 61, -89, 179};
 
         takePhotoLoopAngles(angles);
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
-            while( switchCameraButton.getVisibility() != View.VISIBLE ) {
+            while (switchCameraButton.getVisibility() != View.VISIBLE) {
                 // wait until photo is taken and button is visible again
             }
             clickView(switchCameraButton);
@@ -6070,7 +6051,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             int new_cameraId = mPreview.getCameraId();
             assertTrue(cameraId != new_cameraId);
             takePhotoLoopAngles(angles);
-            while( switchCameraButton.getVisibility() != View.VISIBLE ) {
+            while (switchCameraButton.getVisibility() != View.VISIBLE) {
                 // wait until photo is taken and button is visible again
             }
 
@@ -6098,21 +6079,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoAutoLevelAngles();
     }
 
-    private interface VideoTestCallback {
-        int doTest(); // return expected number of new files (or -1 to indicate not to check this)
-    }
-
     /**
      * @return The number of resultant video files
      */
     private int subTestTakeVideo(boolean test_exposure_lock, boolean test_focus_area, boolean allow_failure, boolean immersive_mode, VideoTestCallback test_cb, long time_ms, boolean max_filesize, int n_non_video_files) throws InterruptedException {
         assertTrue(mPreview.isPreviewStarted());
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             assertEquals(mPreview.getCurrentPreviewSize().width, mPreview.getCameraController().test_texture_view_buffer_w);
             assertEquals(mPreview.getCurrentPreviewSize().height, mPreview.getCameraController().test_texture_view_buffer_h);
         }
 
-        if( test_exposure_lock && !mPreview.supportsExposureLock() ) {
+        if (test_exposure_lock && !mPreview.supportsExposureLock()) {
             return 0;
         }
 
@@ -6120,14 +6097,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View pauseVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.pause_video);
         View takePhotoVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo_when_video_recording);
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( mPreview.isVideo() ) {
+        if (mPreview.isVideo()) {
             assertEquals((int) (Integer) takePhotoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_video_selector);
             assertEquals((int) (Integer) switchVideoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_photo);
             assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.start_video));
             assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
             assertEquals(switchVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.switch_to_photo));
-        }
-        else {
+        } else {
             assertEquals((int) (Integer) takePhotoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_photo_selector);
             assertEquals((int) (Integer) switchVideoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_video);
             assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.take_photo));
@@ -6137,13 +6113,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(pauseVideoButton.getVisibility(), View.GONE);
         assertEquals(takePhotoVideoButton.getVisibility(), View.GONE);
 
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
         assertTrue(mPreview.isVideo());
         assertTrue(mPreview.isPreviewStarted());
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             assertEquals(mPreview.getCurrentPreviewSize().width, mPreview.getCameraController().test_texture_view_buffer_w);
             assertEquals(mPreview.getCurrentPreviewSize().height, mPreview.getCameraController().test_texture_view_buffer_h);
         }
@@ -6195,14 +6171,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             assertEquals(mPreview.getCurrentPreviewSize().width, mPreview.getCameraController().test_texture_view_buffer_w);
             assertEquals(mPreview.getCurrentPreviewSize().height, mPreview.getCameraController().test_texture_view_buffer_h);
         }
 
-        if( mPreview.isOnTimer() ) {
+        if (mPreview.isOnTimer()) {
             Log.d(TAG, "wait for timer");
-            while( mPreview.isOnTimer() ) {
+            while (mPreview.isOnTimer()) {
             }
             this.getInstrumentation().waitForIdleSync();
             Log.d(TAG, "after idle sync");
@@ -6210,16 +6186,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         int exp_n_new_files = 0;
         boolean failed_to_start = false;
-        if( mPreview.isVideoRecording() ) {
+        if (mPreview.isVideoRecording()) {
             assertEquals((int) (Integer) takePhotoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_video_recording);
             assertEquals((int) (Integer) switchVideoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_photo);
             assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
             assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
-            if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.N )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
             else
                 assertEquals(pauseVideoButton.getVisibility(), View.GONE);
-            if( mPreview.supportsPhotoVideoRecording() )
+            if (mPreview.supportsPhotoVideoRecording())
                 assertEquals(takePhotoVideoButton.getVisibility(), View.VISIBLE);
             else
                 assertEquals(takePhotoVideoButton.getVisibility(), View.GONE);
@@ -6234,8 +6210,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals(trashButton.getVisibility(), View.GONE);
             assertEquals(shareButton.getVisibility(), View.GONE);
 
-            if( test_cb == null ) {
-                if( !immersive_mode && time_ms > 500 ) {
+            if (test_cb == null) {
+                if (!immersive_mode && time_ms > 500) {
                     // test turning torch on/off (if in immersive mode, popup button will be hidden)
                     switchToFlashValue("flash_torch");
                     Thread.sleep(500);
@@ -6249,17 +6225,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
 
                 assertFalse(mPreview.hasFocusArea());
-                if( !allow_failure ) {
+                if (!allow_failure) {
                     assertNull(mPreview.getCameraController().getFocusAreas());
                     assertNull(mPreview.getCameraController().getMeteringAreas());
                 }
 
-                if( test_focus_area ) {
+                if (test_focus_area) {
                     // touch to auto-focus with focus area
                     Log.d(TAG, "touch to focus");
                     TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
                     Thread.sleep(1000); // wait for autofocus
-                    if( mPreview.supportsFocus() ) {
+                    if (mPreview.supportsFocus()) {
                         assertTrue(mPreview.hasFocusArea());
                         assertNotNull(mPreview.getCameraController().getFocusAreas());
                         assertEquals(1, mPreview.getCameraController().getFocusAreas().size());
@@ -6273,13 +6249,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
                 }
 
-                if( test_exposure_lock ) {
+                if (test_exposure_lock) {
                     Log.d(TAG, "test exposure lock");
                     assertFalse(mPreview.getCameraController().getAutoExposureLock());
                     clickView(exposureLockButton);
                     this.getInstrumentation().waitForIdleSync();
                     Log.d(TAG, "after idle sync");
-                    assertTrue( mPreview.getCameraController().getAutoExposureLock() );
+                    assertTrue(mPreview.getCameraController().getAutoExposureLock());
                     Thread.sleep(2000);
                 }
 
@@ -6292,11 +6268,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "done clicking stop video");
                 this.getInstrumentation().waitForIdleSync();
                 Log.d(TAG, "after idle sync");
-            }
-            else {
+            } else {
                 exp_n_new_files = test_cb.doTest();
 
-                if( mPreview.isVideoRecording() ) {
+                if (mPreview.isVideoRecording()) {
                     Log.d(TAG, "about to click stop video");
                     clickView(takePhotoButton);
                     Log.d(TAG, "done clicking stop video");
@@ -6304,36 +6279,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     Log.d(TAG, "after idle sync");
                 }
             }
-        }
-        else {
+        } else {
             Log.d(TAG, "didn't start video");
             assertTrue(allow_failure);
             failed_to_start = true;
         }
 
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             assertEquals(mPreview.getCurrentPreviewSize().width, mPreview.getCameraController().test_texture_view_buffer_w);
             assertEquals(mPreview.getCurrentPreviewSize().height, mPreview.getCameraController().test_texture_view_buffer_h);
         }
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
-        if( test_cb == null ) {
-            if( time_ms <= 500 ) {
+        if (test_cb == null) {
+            if (time_ms <= 500) {
                 // if quick, should have deleted corrupt video - but may be device dependent, sometimes we manage to record a video anyway!
                 assertTrue(n_new_files == 0 || n_new_files == 1);
-            }
-            else if( failed_to_start ) {
+            } else if (failed_to_start) {
                 // if video recording failed to start, we should have deleted any file created!
                 assertEquals(0, n_new_files);
+            } else {
+                assertEquals(n_non_video_files + 1, n_new_files);
             }
-            else {
-                assertEquals(n_non_video_files+1, n_new_files);
-            }
-        }
-        else {
+        } else {
             Log.d(TAG, "exp_n_new_files: " + exp_n_new_files);
-            if( exp_n_new_files >= 0 ) {
+            if (exp_n_new_files >= 0) {
                 assertEquals(exp_n_new_files, n_new_files);
             }
         }
@@ -6341,7 +6312,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // trash/share only shown when preview is paused after taking a photo
 
         assertTrue(mPreview.isPreviewStarted()); // check preview restarted
-        if( !max_filesize ) {
+        if (!max_filesize) {
             // if doing restart on max filesize, we may have already restarted by now (on Camera2 API at least)
             Log.d(TAG, "switchCameraButton.getVisibility(): " + switchCameraButton.getVisibility());
             assertEquals(switchCameraButton.getVisibility(), (immersive_mode ? View.GONE : (mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ? View.VISIBLE : View.GONE)));
@@ -6355,18 +6326,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(trashButton.getVisibility(), View.GONE);
         assertEquals(shareButton.getVisibility(), View.GONE);
 
-        assertFalse( mPreview.isVideoRecording() );
+        assertFalse(mPreview.isVideoRecording());
         assertEquals((int) (Integer) takePhotoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_video_selector);
         assertEquals((int) (Integer) switchVideoButton.getTag(), net.sourceforge.opencamera.R.drawable.take_photo);
-        assertEquals( takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.start_video) );
+        assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.start_video));
         assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
         Log.d(TAG, "pauseVideoButton.getVisibility(): " + pauseVideoButton.getVisibility());
         assertEquals(pauseVideoButton.getVisibility(), View.GONE);
         assertEquals(takePhotoVideoButton.getVisibility(), View.GONE);
 
         Log.d(TAG, "test_n_videos_scanned: " + mActivity.getApplicationInterface().test_n_videos_scanned);
-        if( !allow_failure ) {
-            assertEquals(n_new_files-n_non_video_files, mActivity.getApplicationInterface().test_n_videos_scanned);
+        if (!allow_failure) {
+            assertEquals(n_new_files - n_non_video_files, mActivity.getApplicationInterface().test_n_videos_scanned);
         }
 
         return n_new_files;
@@ -6399,7 +6370,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakeVideoSAF() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -6417,7 +6388,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(1, n_new_files);
     }
 
-    /** Tests video subtitles option.
+    /**
+     * Tests video subtitles option.
      */
     public void testTakeVideoSubtitles() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSubtitles");
@@ -6434,7 +6406,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideo(false, false, false, false, null, 5000, false, 1);
     }
 
-    /** Tests video subtitles option, when using Storage Access Framework.
+    /**
+     * Tests video subtitles option, when using Storage Access Framework.
      */
     public void testTakeVideoSubtitlesSAF() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSubtitlesSAF");
@@ -6453,7 +6426,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideo(false, false, false, false, null, 5000, false, 1);
     }
 
-    /** Tests video subtitles option, including GPS - also tests losing the connection.
+    /**
+     * Tests video subtitles option, including GPS - also tests losing the connection.
      */
     public void testTakeVideoSubtitlesGPS() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSubtitlesGPS");
@@ -6473,9 +6447,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             public int doTest() {
                 // wait for location
                 long start_t = System.currentTimeMillis();
-                while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+                while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
                     getInstrumentation().waitForIdleSync();
-                    if( System.currentTimeMillis() - start_t > 20000 ) {
+                    if (System.currentTimeMillis() - start_t > 20000) {
                         // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                         fail();
                     }
@@ -6486,8 +6460,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "have location");
                 try {
                     Thread.sleep(2000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -6498,8 +6471,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 try {
                     Thread.sleep(2000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -6509,12 +6481,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }, 5000, false, 1);
     }
 
-    /** Test pausing and resuming video.
+    /**
+     * Test pausing and resuming video.
      */
     public void testTakeVideoPause() throws InterruptedException {
         Log.d(TAG, "testTakeVideoPause");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.N ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             Log.d(TAG, "pause video requires Android N or better");
             return;
         }
@@ -6533,20 +6506,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait before pausing");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
                 long video_time = mPreview.getVideoTime();
                 Log.d(TAG, "video time: " + video_time);
-                assertTrue( video_time >= 3000 - time_tol_ms );
-                assertTrue( video_time <= 3000 + time_tol_ms );
+                assertTrue(video_time >= 3000 - time_tol_ms);
+                assertTrue(video_time <= 3000 + time_tol_ms);
 
                 Log.d(TAG, "about to click pause video");
                 clickView(pauseVideoButton);
@@ -6556,25 +6528,24 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.resume_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
-                assertTrue( mPreview.isVideoRecordingPaused() );
+                assertTrue(mPreview.isVideoRecording());
+                assertTrue(mPreview.isVideoRecordingPaused());
 
                 Log.d(TAG, "wait before resuming");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.resume_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
-                assertTrue( mPreview.isVideoRecordingPaused() );
+                assertTrue(mPreview.isVideoRecording());
+                assertTrue(mPreview.isVideoRecordingPaused());
                 video_time = mPreview.getVideoTime();
                 Log.d(TAG, "video time: " + video_time);
-                assertTrue( video_time >= 3000 - time_tol_ms );
-                assertTrue( video_time <= 3000 + time_tol_ms );
+                assertTrue(video_time >= 3000 - time_tol_ms);
+                assertTrue(video_time <= 3000 + time_tol_ms);
 
                 Log.d(TAG, "about to click resume video");
                 clickView(pauseVideoButton);
@@ -6584,14 +6555,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
 
                 Log.d(TAG, "wait before stopping");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -6599,12 +6569,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
                 video_time = mPreview.getVideoTime();
                 Log.d(TAG, "video time: " + video_time);
-                assertTrue( video_time >= 6000 - time_tol_ms );
-                assertTrue( video_time <= 6000 + time_tol_ms );
+                assertTrue(video_time >= 6000 - time_tol_ms);
+                assertTrue(video_time <= 6000 + time_tol_ms);
 
                 Log.d(TAG, "about to click stop video");
                 clickView(takePhotoButton);
@@ -6617,12 +6587,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }, 5000, false, 0);
     }
 
-    /** Test pausing and stopping video.
+    /**
+     * Test pausing and stopping video.
      */
     public void testTakeVideoPauseStop() throws InterruptedException {
         Log.d(TAG, "testTakeVideoPauseStop");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.N ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             Log.d(TAG, "pause video requires Android N or better");
             return;
         }
@@ -6641,20 +6612,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait before pausing");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.pause_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
                 long video_time = mPreview.getVideoTime();
                 Log.d(TAG, "video time: " + video_time);
-                assertTrue( video_time >= 3000 - time_tol_ms );
-                assertTrue( video_time <= 3000 + time_tol_ms );
+                assertTrue(video_time >= 3000 - time_tol_ms);
+                assertTrue(video_time <= 3000 + time_tol_ms);
 
                 Log.d(TAG, "about to click pause video");
                 clickView(pauseVideoButton);
@@ -6664,14 +6634,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.resume_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
-                assertTrue( mPreview.isVideoRecordingPaused() );
+                assertTrue(mPreview.isVideoRecording());
+                assertTrue(mPreview.isVideoRecordingPaused());
 
                 Log.d(TAG, "wait before stopping");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -6679,12 +6648,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(pauseVideoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.resume_video));
                 assertEquals(pauseVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
-                assertTrue( mPreview.isVideoRecordingPaused() );
+                assertTrue(mPreview.isVideoRecording());
+                assertTrue(mPreview.isVideoRecordingPaused());
                 video_time = mPreview.getVideoTime();
                 Log.d(TAG, "video time: " + video_time);
-                assertTrue( video_time >= 3000 - time_tol_ms );
-                assertTrue( video_time <= 3000 + time_tol_ms );
+                assertTrue(video_time >= 3000 - time_tol_ms);
+                assertTrue(video_time <= 3000 + time_tol_ms);
 
                 Log.d(TAG, "about to click stop video");
                 clickView(takePhotoButton);
@@ -6711,14 +6680,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait before taking photo");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(takePhotoVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
 
                 Log.d(TAG, "about to click take photo snapshot");
@@ -6730,20 +6698,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 waitForTakePhoto();
 
                 assertEquals(takePhotoVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.isVideoRecordingPaused());
 
                 Log.d(TAG, "wait before stopping");
                 try {
                     Thread.sleep(3000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 assertEquals(takePhotoButton.getContentDescription(), mActivity.getResources().getString(net.sourceforge.opencamera.R.string.stop_video));
                 assertEquals(takePhotoVideoButton.getVisibility(), View.VISIBLE);
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
 
                 Log.d(TAG, "about to click stop video");
                 clickView(takePhotoButton);
@@ -6758,14 +6725,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mActivity.waitUntilImageQueueEmpty();
     }
 
-    /** Test taking photo while recording video.
+    /**
+     * Test taking photo while recording video.
      */
     public void testTakeVideoSnapshot() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSnapshot");
 
         setToDefault();
 
-        if( !mPreview.supportsPhotoVideoRecording() ) {
+        if (!mPreview.supportsPhotoVideoRecording()) {
             Log.d(TAG, "video snapshot not supported");
             return;
         }
@@ -6773,14 +6741,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideoSnapshot();
     }
 
-    /** Test taking photo while recording video, with timer.
+    /**
+     * Test taking photo while recording video, with timer.
      */
     public void testTakeVideoSnapshotTimer() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSnapshotTimer");
 
         setToDefault();
 
-        if( !mPreview.supportsPhotoVideoRecording() ) {
+        if (!mPreview.supportsPhotoVideoRecording()) {
             Log.d(TAG, "video snapshot not supported");
             return;
         }
@@ -6794,14 +6763,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideoSnapshot();
     }
 
-    /** Test taking photo while recording video, with pause preview.
+    /**
+     * Test taking photo while recording video, with pause preview.
      */
     public void testTakeVideoSnapshotPausePreview() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSnapshotPausePreview");
 
         setToDefault();
 
-        if( !mPreview.supportsPhotoVideoRecording() ) {
+        if (!mPreview.supportsPhotoVideoRecording()) {
             Log.d(TAG, "video snapshot not supported");
             return;
         }
@@ -6814,14 +6784,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideoSnapshot();
     }
 
-    /** Test taking photo while recording video at max video quality.
+    /**
+     * Test taking photo while recording video at max video quality.
      */
     public void testTakeVideoSnapshotMax() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSnapshotMax");
 
         setToDefault();
 
-        if( !mPreview.supportsPhotoVideoRecording() ) {
+        if (!mPreview.supportsPhotoVideoRecording()) {
             Log.d(TAG, "video snapshot not supported");
             return;
         }
@@ -6835,13 +6806,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideoSnapshot();
     }
 
-    /** Set available memory to make sure that we stop before running out of memory.
-     *  This test is fine-tuned to Nexus 6, OnePlus 3T, Nokia 8, Galaxy S10e as we measure hitting max filesize based on time.
+    /**
+     * Set available memory to make sure that we stop before running out of memory.
+     * This test is fine-tuned to Nexus 6, OnePlus 3T, Nokia 8, Galaxy S10e as we measure hitting max filesize based on time.
      */
     public void testTakeVideoAvailableMemory() throws InterruptedException {
         Log.d(TAG, "testTakeVideoAvailableMemory");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // as not fine-tuned to pre-Android 5 devices
             return;
         }
@@ -6851,8 +6823,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mActivity.getApplicationInterface().test_available_memory = 50000000;
         boolean is_nokia = Build.MANUFACTURER.toLowerCase(Locale.US).contains("hmd global");
         boolean is_samsung = Build.MANUFACTURER.toLowerCase(Locale.US).contains("samsung");
-        if( is_nokia || is_samsung )
-        {
+        if (is_nokia || is_samsung) {
             // Nokia 8 has much smaller video sizes, at least when recording with phone face down, so we both set
             // 4K, and lower test_available_memory.
             mActivity.getApplicationInterface().test_available_memory = 21000000; // must be at least MyApplicationInterface.getVideoMaxFileSizePref().min_free_filesize
@@ -6872,17 +6843,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 long video_time_s = mPreview.getVideoTime();
                 // simulate remaining memory now being reduced, so we don't keep trying to restart
                 mActivity.getApplicationInterface().test_available_memory = 10000000;
-                while( mPreview.isVideoRecording() ) {
-                    assertTrue( System.currentTimeMillis() - time_s <= 35000 );
+                while (mPreview.isVideoRecording()) {
+                    assertTrue(System.currentTimeMillis() - time_s <= 35000);
                     long video_time = mPreview.getVideoTime();
-                    assertTrue( video_time >= video_time_s );
+                    assertTrue(video_time >= video_time_s);
                 }
                 Log.d(TAG, "video recording now stopped");
                 // now allow time for video recording to properly shut down
                 try {
                     Thread.sleep(1000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -6893,7 +6863,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }, 5000, true, 0);
     }
 
-    /** Set available memory small enough to make sure we don't even attempt to record video.
+    /**
+     * Set available memory small enough to make sure we don't even attempt to record video.
      */
     public void testTakeVideoAvailableMemory2() throws InterruptedException {
         Log.d(TAG, "testTakeVideoAvailableMemory2");
@@ -6908,25 +6879,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             public int doTest() {
                 // wait until automatically stops
                 Log.d(TAG, "wait until video recording stops");
-                assertFalse( mPreview.isVideoRecording() );
+                assertFalse(mPreview.isVideoRecording());
                 Log.d(TAG, "video recording now stopped");
                 return 0;
             }
         }, 5000, true, 0);
     }
 
-    /** Set maximum filesize so that we get approx 3s of video time. Check that recording stops and restarts within 10s.
-     *  Then check recording stops again within 10s.
-     *  On Android 8+, we use MediaRecorder.setNextOutputFile() (see Preview.onVideoInfo()), so instead we just wait 10s and
-     *  check video is still recording, then expect at least 2 resultant video files. If this fails on Android 8+, ensure
-     *  that the video lengths aren't too short (if less than 3s, we sometimes seem to fall back to the pre-Android 8
-     *  behaviour, presumably because setNextOutputFile() can't take effect in time).
-     *  This test is fine-tuned to Nexus 6, OnePlus 3T, Nokia 8, Galaxy S10e, as we measure hitting max filesize based on time.
+    /**
+     * Set maximum filesize so that we get approx 3s of video time. Check that recording stops and restarts within 10s.
+     * Then check recording stops again within 10s.
+     * On Android 8+, we use MediaRecorder.setNextOutputFile() (see Preview.onVideoInfo()), so instead we just wait 10s and
+     * check video is still recording, then expect at least 2 resultant video files. If this fails on Android 8+, ensure
+     * that the video lengths aren't too short (if less than 3s, we sometimes seem to fall back to the pre-Android 8
+     * behaviour, presumably because setNextOutputFile() can't take effect in time).
+     * This test is fine-tuned to Nexus 6, OnePlus 3T, Nokia 8, Galaxy S10e, as we measure hitting max filesize based on time.
      */
     public void testTakeVideoMaxFileSize1() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMaxFileSize1");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // as not fine-tuned to pre-Android 5 devices
             return;
         }
@@ -6935,13 +6907,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         SharedPreferences.Editor editor = settings.edit();
         boolean is_nokia = Build.MANUFACTURER.toLowerCase(Locale.US).contains("hmd global");
         boolean is_samsung = Build.MANUFACTURER.toLowerCase(Locale.US).contains("samsung");
-        if( is_nokia || is_samsung ) {
+        if (is_nokia || is_samsung) {
             // Nokia 8 has much smaller video sizes, at least when recording with phone face down, so we also set 4K
             editor.putString(PreferenceKeys.getVideoQualityPreferenceKey(mPreview.getCameraId(), false), "" + CamcorderProfile.QUALITY_HIGH); // set to highest quality (4K on Nexus 6)
             //editor.putString(PreferenceKeys.VideoMaxFileSizePreferenceKey, "2000000"); // approx 3s on Nokia 8 at 4K
             editor.putString(PreferenceKeys.VideoMaxFileSizePreferenceKey, "10000000"); // approx 3s on Nokia 8 at 4K
-        }
-        else {
+        } else {
             //editor.putString(PreferenceKeys.getVideoQualityPreferenceKey(mPreview.getCameraId()), "" + CamcorderProfile.QUALITY_HIGH); // set to highest quality (4K on Nexus 6)
             //editor.putString(PreferenceKeys.VideoMaxFileSizePreferenceKey, "15728640"); // approx 3-4s on Nexus 6 at 4K
             editor.putString(PreferenceKeys.VideoMaxFileSizePreferenceKey, "9437184"); // approx 3-4s on Nexus 6 at FullHD
@@ -6952,13 +6923,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int n_new_files = subTestTakeVideo(false, false, false, false, new VideoTestCallback() {
             @Override
             public int doTest() {
-                if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     assertTrue(mPreview.isVideoRecording());
                     Log.d(TAG, "wait");
                     try {
                         Thread.sleep(10000);
-                    }
-                    catch(InterruptedException e) {
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                         fail();
                     }
@@ -6973,51 +6943,50 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait until video recording stops");
                 long time_s = System.currentTimeMillis();
                 long video_time_s = mPreview.getVideoTime();
-                while( mPreview.isVideoRecording() ) {
-                    assertTrue( System.currentTimeMillis() - time_s <= 8000 );
+                while (mPreview.isVideoRecording()) {
+                    assertTrue(System.currentTimeMillis() - time_s <= 8000);
                     long video_time = mPreview.getVideoTime();
-                    assertTrue( video_time >= video_time_s );
+                    assertTrue(video_time >= video_time_s);
                 }
                 Log.d(TAG, "video recording now stopped - wait for restart");
                 video_time_s = mPreview.getVideoAccumulatedTime();
                 Log.d(TAG, "video_time_s: " + video_time_s);
                 // now ensure we'll restart within a reasonable time
                 time_s = System.currentTimeMillis();
-                while( !mPreview.isVideoRecording() ) {
+                while (!mPreview.isVideoRecording()) {
                     long c_time = System.currentTimeMillis();
-                    if( c_time - time_s > 10000 ) {
+                    if (c_time - time_s > 10000) {
                         Log.e(TAG, "time: " + (c_time - time_s));
                     }
-                    assertTrue( c_time - time_s <= 10000 );
+                    assertTrue(c_time - time_s <= 10000);
                 }
                 // wait for stop again
                 time_s = System.currentTimeMillis();
-                while( mPreview.isVideoRecording() ) {
+                while (mPreview.isVideoRecording()) {
                     long c_time = System.currentTimeMillis();
-                    if( c_time - time_s > 10000 ) {
+                    if (c_time - time_s > 10000) {
                         Log.e(TAG, "time: " + (c_time - time_s));
                     }
-                    assertTrue( c_time - time_s <= 10000 );
+                    assertTrue(c_time - time_s <= 10000);
                     long video_time = mPreview.getVideoTime();
-                    if( video_time < video_time_s )
+                    if (video_time < video_time_s)
                         Log.d(TAG, "compare: " + video_time_s + " to " + video_time);
-                    assertTrue( video_time + 1 >= video_time_s );
+                    assertTrue(video_time + 1 >= video_time_s);
                 }
                 Log.d(TAG, "video recording now stopped again");
 
                 // now start again
                 time_s = System.currentTimeMillis();
-                while( !mPreview.isVideoRecording() ) {
+                while (!mPreview.isVideoRecording()) {
                     long c_time = System.currentTimeMillis();
-                    if( c_time - time_s > 10000 ) {
+                    if (c_time - time_s > 10000) {
                         Log.e(TAG, "time: " + (c_time - time_s));
                     }
-                    assertTrue( c_time - time_s <= 10000 );
+                    assertTrue(c_time - time_s <= 10000);
                 }
                 try {
                     Thread.sleep(1000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -7025,8 +6994,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 // now properly stop - need to wait first so that stopping video isn't ignored (due to too quick after video start)
                 try {
                     Thread.sleep(1000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -7039,8 +7007,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait for stop");
                 try {
                     Thread.sleep(1000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -7049,18 +7016,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             }
         }, 5000, true, 0);
 
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
-            assertTrue( n_new_files >= 2 );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            assertTrue(n_new_files >= 2);
         }
     }
 
-    /** Max filesize is for ~4.5s, and max duration is 5s, check we only get 1 video.
-     *  This test is fine-tuned to OnePlus 3T, as we measure hitting max filesize based on time.
+    /**
+     * Max filesize is for ~4.5s, and max duration is 5s, check we only get 1 video.
+     * This test is fine-tuned to OnePlus 3T, as we measure hitting max filesize based on time.
      */
     public void testTakeVideoMaxFileSize2() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMaxFileSize2");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // as not fine-tuned to pre-Android 5 devices
             return;
         }
@@ -7081,18 +7049,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait until video recording stops");
                 long time_s = System.currentTimeMillis();
                 long video_time_s = mPreview.getVideoTime();
-                while( mPreview.isVideoRecording() ) {
-                    assertTrue( System.currentTimeMillis() - time_s <= 8000 );
+                while (mPreview.isVideoRecording()) {
+                    assertTrue(System.currentTimeMillis() - time_s <= 8000);
                     long video_time = mPreview.getVideoTime();
-                    assertTrue( video_time >= video_time_s );
+                    assertTrue(video_time >= video_time_s);
                 }
                 Log.d(TAG, "video recording now stopped - check we don't restart");
                 video_time_s = mPreview.getVideoAccumulatedTime();
                 Log.d(TAG, "video_time_s: " + video_time_s);
                 // now ensure we don't restart
                 time_s = System.currentTimeMillis();
-                while( System.currentTimeMillis() - time_s <= 5000 ) {
-                    assertFalse( mPreview.isVideoRecording() );
+                while (System.currentTimeMillis() - time_s <= 5000) {
+                    assertFalse(mPreview.isVideoRecording());
                 }
                 return 1;
             }
@@ -7105,7 +7073,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakeVideoMaxFileSize3() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMaxFileSize3");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             // as not fine-tuned to pre-Android 5 devices
             return;
         }
@@ -7128,28 +7096,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Log.d(TAG, "wait until video recording completely stopped");
                 try {
                     Thread.sleep(38000);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
                 Log.d(TAG, "ensure we've really stopped");
                 long time_s = System.currentTimeMillis();
-                while( System.currentTimeMillis() - time_s <= 5000 ) {
-                    assertFalse( mPreview.isVideoRecording() );
+                while (System.currentTimeMillis() - time_s <= 5000) {
+                    assertFalse(mPreview.isVideoRecording());
                 }
                 return -1; // the number of videos recorded can very, as the max duration corresponding to max filesize can vary widly
             }
         }, 5000, true, 0);
     }
 
-
     private void subTestTakeVideoMaxFileSize4() throws InterruptedException {
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.O ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             // as this tests Android 8+'s seamless restart
             return;
         }
-        if( isEmulator() ) {
+        if (isEmulator()) {
             // as test takes about 6.5 minutes on emulator (possibly due to unusual video file sizes), even though it does eventually pass
             return;
         }
@@ -7167,12 +7133,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 assertTrue(mPreview.isVideoRecording());
                 assertFalse(mPreview.test_started_next_output_file);
 
-                while( !mPreview.test_called_next_output_file ) {
+                while (!mPreview.test_called_next_output_file) {
                     Log.d(TAG, "waiting for test_called_next_output_file");
                     try {
                         Thread.sleep(100);
-                    }
-                    catch(InterruptedException e) {
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                         fail();
                     }
@@ -7189,8 +7154,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 // wait a little bit longer... but needs to be before seamless restart actually occurs!
                 try {
                     Thread.sleep(100);
-                }
-                catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                     fail();
                 }
@@ -7205,9 +7169,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }, 5000, true, 0);
     }
 
-    /** Tests stopping video when MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING has been received, but before
-     *  we receive MEDIA_RECORDER_INFO_NEXT_OUTPUT_FILE_STARTED. Tests that we delete the leftover zero-length file
-     *  that would have been created.
+    /**
+     * Tests stopping video when MEDIA_RECORDER_INFO_MAX_FILESIZE_APPROACHING has been received, but before
+     * we receive MEDIA_RECORDER_INFO_NEXT_OUTPUT_FILE_STARTED. Tests that we delete the leftover zero-length file
+     * that would have been created.
      */
     public void testTakeVideoMaxFileSize4() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMaxFileSize4");
@@ -7217,12 +7182,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideoMaxFileSize4();
     }
 
-    /** As testTakeVideoMaxFileSize4(), but using Storage Access Framework.
+    /**
+     * As testTakeVideoMaxFileSize4(), but using Storage Access Framework.
      */
     public void testTakeVideoMaxFileSize4SAF() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMaxFileSize4SAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -7243,7 +7209,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsVideoStabilization() ) {
+        if (!mPreview.supportsVideoStabilization()) {
             Log.d(TAG, "video stabilization not supported");
             return;
         }
@@ -7309,8 +7275,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideo(false, true, false, false, null, 5000, false, 0);
     }
 
-    /** Tests starting and stopping video quickly, to simulate failing to create a video (but needs Open Camera to delete
-     *  the corrupt resultant video).
+    /**
+     * Tests starting and stopping video quickly, to simulate failing to create a video (but needs Open Camera to delete
+     * the corrupt resultant video).
      */
     public void testTakeVideoQuick() throws InterruptedException {
         Log.d(TAG, "testTakeVideoQuick");
@@ -7327,7 +7294,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakeVideoQuickSAF() throws InterruptedException {
         Log.d(TAG, "testTakeVideoQuickSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -7358,7 +7325,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testTakeVideoForceFailureSAF() throws InterruptedException {
         Log.d(TAG, "testTakeVideoForceFailureSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -7400,7 +7367,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsForceVideo4K() ) {
+        if (!mActivity.supportsForceVideo4K()) {
             return;
         }
 
@@ -7413,33 +7380,31 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakeVideo(false, false, true, false, null, 5000, false, 0);
     }
 
-    /** Will likely be unreliable on OnePlus 3T and Galaxy S10e with Camera2.
+    /**
+     * Will likely be unreliable on OnePlus 3T and Galaxy S10e with Camera2.
      */
     public void testTakeVideoFPS() throws InterruptedException {
         Log.d(TAG, "testTakeVideoFPS");
 
         setToDefault();
         // different frame rates only reliable for Camera2, but at least make sure we don't crash on old api
-        final int [] fps_values = mPreview.usingCamera2API() ? new int[]{15, 25, 30, 60, 120, 240} : new int[]{30};
-        for(int fps_value : fps_values) {
-            if( mPreview.usingCamera2API() ) {
-                if( mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value) ) {
+        final int[] fps_values = mPreview.usingCamera2API() ? new int[]{15, 25, 30, 60, 120, 240} : new int[]{30};
+        for (int fps_value : fps_values) {
+            if (mPreview.usingCamera2API()) {
+                if (mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value)) {
                     Log.d(TAG, "fps supported at normal speed: " + fps_value);
-                }
-                else if( mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value) ) {
+                } else if (mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value)) {
                     Log.d(TAG, "fps supported at HIGH SPEED: " + fps_value);
-                }
-                else {
+                } else {
                     Log.d(TAG, "fps is NOT supported: " + fps_value);
                     continue;
                 }
                 boolean expect_high_speed;
                 boolean is_samsung = Build.MANUFACTURER.toLowerCase(Locale.US).contains("samsung");
-                if( is_samsung ) {
+                if (is_samsung) {
                     // tested on Galaxy S10e at least
                     expect_high_speed = (fps_value > 60);
-                }
-                else {
+                } else {
                     expect_high_speed = (fps_value >= 60);
                 }
                 assertEquals(expect_high_speed, mPreview.fpsIsHighSpeed("" + fps_value));
@@ -7458,32 +7423,31 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    /** Will likely be unreliable on OnePlus 3T and Galaxy S10e.
-     *  Manual mode should be ignored by high speed video, but check this doesn't crash at least!
+    /**
+     * Will likely be unreliable on OnePlus 3T and Galaxy S10e.
+     * Manual mode should be ignored by high speed video, but check this doesn't crash at least!
      */
     public void testTakeVideoFPSHighSpeedManual() throws InterruptedException {
         Log.d(TAG, "testTakeVideoFPSHighSpeedManual");
 
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
-        }
-        else if( !mPreview.supportsISORange() ) {
+        } else if (!mPreview.supportsISORange()) {
             return;
         }
 
         int fps_value = 120;
-        if( mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value) ) {
+        if (mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value)) {
             Log.d(TAG, "fps supported at normal speed: " + fps_value);
             return;
-        }
-        else if( !mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value) ) {
+        } else if (!mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value)) {
             Log.d(TAG, "fps is NOT supported: " + fps_value);
             return;
         }
 
-        assertTrue( mPreview.fpsIsHighSpeed("" + fps_value) );
+        assertTrue(mPreview.fpsIsHighSpeed("" + fps_value));
 
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
         SharedPreferences.Editor editor = settings.edit();
@@ -7515,28 +7479,28 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(exposureButton.getVisibility(), View.VISIBLE);
     }
 
-    /** Tests that video resolutions are stored separately for high speed fps, for Camera2.
+    /**
+     * Tests that video resolutions are stored separately for high speed fps, for Camera2.
      */
     public void testVideoFPSHighSpeed() {
         Log.d(TAG, "testVideoFPSHighSpeed");
 
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
         }
 
         int fps_value = 120;
-        if( mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value) ) {
+        if (mPreview.getVideoQualityHander().videoSupportsFrameRate(fps_value)) {
             Log.d(TAG, "fps supported at normal speed: " + fps_value);
             return;
-        }
-        else if( !mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value) ) {
+        } else if (!mPreview.getVideoQualityHander().videoSupportsFrameRateHighSpeed(fps_value)) {
             Log.d(TAG, "fps is NOT supported: " + fps_value);
             return;
         }
 
-        assertTrue( mPreview.fpsIsHighSpeed("" + fps_value) );
+        assertTrue(mPreview.fpsIsHighSpeed("" + fps_value));
 
         // switch to video mode
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
@@ -7567,9 +7531,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(video_sizes.size() >= 2);
         // find current index
         int video_size_index = -1;
-        for(int i=0;i<video_sizes.size();i++) {
+        for (int i = 0; i < video_sizes.size(); i++) {
             String video_size = video_sizes.get(i);
-            if( video_size.equals(mPreview.getVideoQualityHander().getCurrentVideoQuality()) ) {
+            if (video_size.equals(mPreview.getVideoQualityHander().getCurrentVideoQuality())) {
                 video_size_index = i;
                 break;
             }
@@ -7638,25 +7602,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(video_width == high_speed_video_width && video_height == high_speed_video_height);
     }
 
-    /** Will likely be unreliable on OnePlus 3T and Galaxy S10e.
+    /**
+     * Will likely be unreliable on OnePlus 3T and Galaxy S10e.
      */
     public void testTakeVideoSlowMotion() throws InterruptedException {
         Log.d(TAG, "testTakeVideoSlowMotion");
 
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             return;
         }
 
         List<Float> supported_capture_rates = mActivity.getApplicationInterface().getSupportedVideoCaptureRates();
-        if( supported_capture_rates.size() <= 1 ) {
+        if (supported_capture_rates.size() <= 1) {
             Log.d(TAG, "slow motion not supported");
             return;
         }
 
         float capture_rate = supported_capture_rates.get(0);
-        if( capture_rate > 1.0f-1.0e-5f ) {
+        if (capture_rate > 1.0f - 1.0e-5f) {
             Log.d(TAG, "slow motion not supported");
             return;
         }
@@ -7683,13 +7648,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // check video profile
         VideoProfile profile = mPreview.getVideoProfile();
         assertEquals(profile.videoCaptureRate, fps, 1.0e-5);
-        assertEquals((float)profile.videoFrameRate, (float)(profile.videoCaptureRate*capture_rate), 1.0e-5);
+        assertEquals((float) profile.videoFrameRate, (float) (profile.videoCaptureRate * capture_rate), 1.0e-5);
 
         boolean allow_failure = false;
         subTestTakeVideo(false, false, allow_failure, false, null, 5000, false, 0);
     }
 
-    /** Take video with timelapse mode.
+    /**
+     * Take video with timelapse mode.
      */
     public void testTakeVideoTimeLapse() throws InterruptedException {
         Log.d(TAG, "testTakeVideoTimeLapse");
@@ -7697,20 +7663,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
 
         List<Float> supported_capture_rates = mActivity.getApplicationInterface().getSupportedVideoCaptureRates();
-        if( supported_capture_rates.size() <= 1 ) {
+        if (supported_capture_rates.size() <= 1) {
             Log.d(TAG, "timelapse not supported");
             return;
         }
 
         float capture_rate = -1.0f;
         // find the first timelapse rate
-        for(float this_capture_rate : supported_capture_rates) {
-            if( this_capture_rate > 1.0f+1.0e-5f ) {
+        for (float this_capture_rate : supported_capture_rates) {
+            if (this_capture_rate > 1.0f + 1.0e-5f) {
                 capture_rate = this_capture_rate;
                 break;
             }
         }
-        if( capture_rate < 0.0f ) {
+        if (capture_rate < 0.0f) {
             Log.d(TAG, "timelapse not supported");
             return;
         }
@@ -7736,7 +7702,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // check video profile
         VideoProfile profile = mPreview.getVideoProfile();
         // note, need to allow a larger delta, due to the fudge factor applied for 2x timelapse
-        assertEquals((float)profile.videoFrameRate, (float)(profile.videoCaptureRate*capture_rate), 5.0e-3);
+        assertEquals((float) profile.videoFrameRate, (float) (profile.videoCaptureRate * capture_rate), 5.0e-3);
 
         boolean allow_failure = false;
         subTestTakeVideo(false, false, allow_failure, false, null, 5000, false, 0);
@@ -7748,9 +7714,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testTakeVideoBitrate");
 
         setToDefault();
-        final String [] bitrate_values = new String[]{"1000000", "10000000", "20000000", "50000000"};
+        final String[] bitrate_values = new String[]{"1000000", "10000000", "20000000", "50000000"};
         //final String [] bitrate_values = new String[]{"1000000", "10000000", "20000000", "30000000"};
-        for(String bitrate_value : bitrate_values) {
+        for (String bitrate_value : bitrate_values) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
             editor.putString(PreferenceKeys.VideoBitratePreferenceKey, bitrate_value);
@@ -7770,7 +7736,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsTonemapCurve() ) {
+        if (!mPreview.supportsTonemapCurve()) {
             Log.d(TAG, "test requires tonemap curve");
             return;
         }
@@ -7783,7 +7749,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestTakeVideo(false, false, true, false, null, 5000, false, 0);
 
-        assertTrue( mPreview.getCameraController().test_used_tonemap_curve );
+        assertTrue(mPreview.getCameraController().test_used_tonemap_curve);
     }
 
     /* Test recording video with a flat (jtlog) profile.
@@ -7793,7 +7759,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsTonemapCurve() ) {
+        if (!mPreview.supportsTonemapCurve()) {
             Log.d(TAG, "test requires tonemap curve");
             return;
         }
@@ -7806,7 +7772,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestTakeVideo(false, false, true, false, null, 5000, false, 0);
 
-        assertTrue( mPreview.getCameraController().test_used_tonemap_curve );
+        assertTrue(mPreview.getCameraController().test_used_tonemap_curve);
     }
 
     /* Test recording video with custom gamma profile.
@@ -7816,7 +7782,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsTonemapCurve() ) {
+        if (!mPreview.supportsTonemapCurve()) {
             Log.d(TAG, "test requires tonemap curve");
             return;
         }
@@ -7830,7 +7796,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestTakeVideo(false, false, true, false, null, 5000, false, 0);
 
-        assertTrue( mPreview.getCameraController().test_used_tonemap_curve );
+        assertTrue(mPreview.getCameraController().test_used_tonemap_curve);
     }
 
     /* Test recording video with non-default edge and noise reduction modes.
@@ -7840,12 +7806,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             Log.d(TAG, "test requires camera2 api");
             return;
         }
 
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         Integer default_edge_mode = previewBuilder.get(CaptureRequest.EDGE_MODE);
         Integer default_noise_reduction_mode = previewBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE);
@@ -7857,11 +7823,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         editor.apply();
         updateForSettings();
 
-        if( mPreview.getSupportedEdgeModes() != null ) {
+        if (mPreview.getSupportedEdgeModes() != null) {
             Integer new_edge_mode = previewBuilder.get(CaptureRequest.EDGE_MODE);
             assertEquals(CameraMetadata.EDGE_MODE_OFF, new_edge_mode.intValue());
         }
-        if( mPreview.getSupportedNoiseReductionModes() != null ) {
+        if (mPreview.getSupportedNoiseReductionModes() != null) {
             Integer new_noise_reduction_mode = previewBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE);
             assertEquals(CameraMetadata.NOISE_REDUCTION_MODE_FAST, new_noise_reduction_mode.intValue());
         }
@@ -7874,13 +7840,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         editor.apply();
         updateForSettings();
 
-        camera_controller2 = (CameraController2)mPreview.getCameraController();
+        camera_controller2 = (CameraController2) mPreview.getCameraController();
         previewBuilder = camera_controller2.testGetPreviewBuilder();
-        if( mPreview.getSupportedEdgeModes() != null ) {
+        if (mPreview.getSupportedEdgeModes() != null) {
             Integer new_edge_mode = previewBuilder.get(CaptureRequest.EDGE_MODE);
             assertEquals(default_edge_mode, new_edge_mode);
         }
-        if( mPreview.getSupportedNoiseReductionModes() != null ) {
+        if (mPreview.getSupportedNoiseReductionModes() != null) {
             Integer new_noise_reduction_mode = previewBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE);
             assertEquals(default_noise_reduction_mode, new_noise_reduction_mode);
         }
@@ -7891,7 +7857,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
             editor.putString(PreferenceKeys.VideoMaxDurationPreferenceKey, "15");
-            if( restart ) {
+            if (restart) {
                 editor.putString(PreferenceKeys.VideoRestartPreferenceKey, "1");
             }
             editor.apply();
@@ -7900,7 +7866,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mPreview.isPreviewStarted());
 
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -7949,7 +7915,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         assertEquals(switchCameraButton.getVisibility(), View.GONE);
         assertEquals(switchMultiCameraButton.getVisibility(), View.GONE);
@@ -7965,26 +7931,25 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Thread.sleep(10000);
         Log.d(TAG, "check still taking video");
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
         // note, if using scoped storage without SAF (i.e., mediastore API), then the video file won't show up until after we've finished recording (IS_PENDING is set to 0)
         assertEquals(MainActivity.useScopedStorage() && !mActivity.getStorageUtils().isUsingSAF() ? 0 : 1, n_new_files);
 
-        if( restart ) {
-            if( interrupt ) {
+        if (restart) {
+            if (interrupt) {
                 Thread.sleep(5100);
                 restart();
                 Log.d(TAG, "done restart");
                 // now wait, and check we don't crash
                 Thread.sleep(5000);
                 return;
-            }
-            else {
+            } else {
                 Thread.sleep(10000);
                 Log.d(TAG, "check restarted video");
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideoRecording());
                 n_new_files = getNFiles() - n_files;
                 Log.d(TAG, "n_new_files: " + n_new_files);
                 // as noted above, with mediastore API then the latest file won't be visible yet
@@ -7992,8 +7957,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 Thread.sleep(15000);
             }
-        }
-        else {
+        } else {
             Thread.sleep(8000);
         }
         Log.d(TAG, "check stopped taking video");
@@ -8063,7 +8027,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mPreview.isPreviewStarted());
 
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -8083,11 +8047,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         Thread.sleep(2000);
         Log.d(TAG, "check still taking video");
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
@@ -8125,7 +8089,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
@@ -8134,21 +8098,22 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     }
 
-    /** Switch to non-default focus, go to settings, check still in focus mode that we set, then test recording.
+    /**
+     * Switch to non-default focus, go to settings, check still in focus mode that we set, then test recording.
      */
     public void testTakeVideoMacro() throws InterruptedException {
         Log.d(TAG, "testTakeVideoMacro");
 
         setToDefault();
 
-        if( !mPreview.supportsFocus() ) {
+        if (!mPreview.supportsFocus()) {
             return;
         }
 
         assertTrue(mPreview.isPreviewStarted());
 
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -8197,11 +8162,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         Thread.sleep(2000);
         Log.d(TAG, "check still taking video");
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
@@ -8214,7 +8179,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             return;
         }
 
@@ -8227,7 +8192,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mPreview.isPreviewStarted());
 
         View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             clickView(switchVideoButton);
             waitUntilCameraOpened();
         }
@@ -8241,11 +8206,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         Thread.sleep(1500);
         Log.d(TAG, "check still taking video");
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         // wait until flash off
         long time_s = System.currentTimeMillis();
@@ -8308,9 +8273,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertTrue(mPreview.isOnTimer());
             assertEquals(0, mPreview.count_cameraTakePicture);
             // quit and resume
-            if( type == 0 )
+            if (type == 0)
                 restart();
-            else if( type == 1 ) {
+            else if (type == 1) {
                 View settingsButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.settings);
                 Log.d(TAG, "about to click settings");
                 clickView(settingsButton);
@@ -8327,11 +8292,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 // need to wait for UI code to finish before leaving
                 this.getInstrumentation().waitForIdleSync();
                 Thread.sleep(500);
-            }
-            else {
+            } else {
                 View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
                 clickView(popupButton);
-                while( !mActivity.popupIsOpen() ) {
+                while (!mActivity.popupIsOpen()) {
                 }
             }
             takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
@@ -8421,8 +8385,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             n_new_files = getNFiles() - n_files;
             Log.d(TAG, "n_new_files: " + n_new_files);
             assertEquals(2, n_new_files);
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
             fail();
         }
@@ -8495,8 +8458,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             // check timer cancelled; may or may not have managed to take a photo
             assertFalse(mPreview.isOnTimer());
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
             fail();
         }
@@ -8511,15 +8473,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToFlashValue("flash_off");
         switchToFlashValue("flash_on");
 
-        if( mPreview.supportsFocus() ) {
-            if( mPreview.getSupportedFocusValues().contains("focus_mode_macro") ) {
+        if (mPreview.supportsFocus()) {
+            if (mPreview.getSupportedFocusValues().contains("focus_mode_macro")) {
                 switchToFocusValue("focus_mode_macro");
-            }
-            else if( mPreview.getSupportedFocusValues().contains("focus_mode_infinity") ) {
+            } else if (mPreview.getSupportedFocusValues().contains("focus_mode_infinity")) {
                 switchToFocusValue("focus_mode_infinity");
             }
 
-            if( mPreview.getSupportedFocusValues().contains("focus_mode_auto") ) {
+            if (mPreview.getSupportedFocusValues().contains("focus_mode_auto")) {
                 switchToFocusValue("focus_mode_auto");
             }
         }
@@ -8529,13 +8490,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
         pauseAndResume();
         assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
     }
 
@@ -8556,7 +8517,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
         int popup_width = popup_view.getWidth();
@@ -8574,11 +8535,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // now reopen popup view, and check the same dimensions
         clickView(popupButton);
-        while( mActivity.popupIsOpen() ) {
+        while (mActivity.popupIsOpen()) {
         }
 
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
         int new_popup_width = popup_view.getWidth();
@@ -8612,7 +8573,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
         assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
         Point display_size = new Point();
@@ -8629,7 +8590,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "gallery right: " + galleryButton.getRight());
         Log.d(TAG, "gallery top: " + galleryButton.getTop());
 
-        assertTrue(settingsButton.getRight() > (int)(0.8*display_size.x));
+        assertTrue(settingsButton.getRight() > (int) (0.8 * display_size.x));
         assertEquals(0, settingsButton.getTop());
         assertEquals(display_size.x, galleryButton.getRight());
         assertEquals(0, galleryButton.getTop());
@@ -8647,14 +8608,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "gallery right: " + galleryButton.getRight());
         Log.d(TAG, "gallery top: " + galleryButton.getTop());
 
-        assertTrue(settingsButton.getRight() < (int)(0.2*display_size.x));
+        assertTrue(settingsButton.getRight() < (int) (0.2 * display_size.x));
         assertEquals(0, settingsButton.getTop());
         assertEquals(display_size.x, galleryButton.getRight());
         assertEquals(0, galleryButton.getTop());
 
         assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
     }
 
@@ -8668,7 +8629,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testPopupLayout");
         setToDefault();
 
-        for(int i=0;i<50;i++) {
+        for (int i = 0; i < 50; i++) {
             View popup_container = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup_container);
             View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
             final float scale = mActivity.getResources().getDisplayMetrics().density;
@@ -8679,7 +8640,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             // open popup
             assertFalse(mActivity.popupIsOpen());
             clickView(popupButton);
-            while( !mActivity.popupIsOpen() ) {
+            while (!mActivity.popupIsOpen()) {
             }
 
             // check popup width is not larger than expected
@@ -8695,10 +8656,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             Log.d(TAG, "done clicking settings");
             this.getInstrumentation().waitForIdleSync();*/
 
-            if( i % 10 == 0 ) {
+            if (i % 10 == 0) {
                 restart();
-            }
-            else {
+            } else {
                 pauseAndResume();
             }
         }
@@ -8713,17 +8673,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertFalse(mActivity.popupIsOpen());
         View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
 
-        if( !mPreview.isVideo() ) {
+        if (!mPreview.isVideo()) {
             View switchVideoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_video);
             clickView(switchVideoButton);
             waitUntilCameraOpened();
             assertTrue(mPreview.isVideo());
         }
 
-        if( !on_timer ) {
+        if (!on_timer) {
             // open popup now
             clickView(popupButton);
-            while( !mActivity.popupIsOpen() ) {
+            while (!mActivity.popupIsOpen()) {
             }
         }
 
@@ -8731,17 +8691,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "about to click take photo");
         clickView(takePhotoButton);
         Log.d(TAG, "done clicking take photo");
-        if( on_timer ) {
+        if (on_timer) {
             assertTrue(mPreview.isOnTimer());
         }
 
         try {
-            if( on_timer ) {
+            if (on_timer) {
                 Thread.sleep(2000);
 
                 // now open popup
                 clickView(popupButton);
-                while( !mActivity.popupIsOpen() ) {
+                while (!mActivity.popupIsOpen()) {
                 }
 
                 // check timer is cancelled
@@ -8751,31 +8711,29 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                 Thread.sleep(4000);
 
                 // now check we still aren't recording, and that popup is still open
-                assertTrue( mPreview.isVideo() );
+                assertTrue(mPreview.isVideo());
                 assertFalse(mPreview.isVideoRecording());
                 assertFalse(mPreview.isOnTimer());
-                assertTrue( mActivity.popupIsOpen() );
-            }
-            else {
+                assertTrue(mActivity.popupIsOpen());
+            } else {
                 Thread.sleep(1000);
 
                 // now check we are recording video, and that popup is closed
-                assertTrue( mPreview.isVideo() );
-                assertTrue( mPreview.isVideoRecording() );
+                assertTrue(mPreview.isVideo());
+                assertTrue(mPreview.isVideoRecording());
                 assertFalse(mActivity.popupIsOpen());
             }
 
-            if( !on_timer ) {
+            if (!on_timer) {
                 // (if on timer, the video will have stopped)
                 List<String> supported_flash_values = mPreview.getSupportedFlashValues();
-                if( supported_flash_values == null ) {
+                if (supported_flash_values == null) {
                     // button shouldn't show at all
                     assertEquals(popupButton.getVisibility(), View.GONE);
-                }
-                else {
+                } else {
                     // now open popup again
                     clickView(popupButton);
-                    while( !mActivity.popupIsOpen() ) {
+                    while (!mActivity.popupIsOpen()) {
                     }
                     subTestPopupButtonAvailability("TEST_FLASH", "flash_off", supported_flash_values);
                     subTestPopupButtonAvailability("TEST_FLASH", "flash_auto", supported_flash_values);
@@ -8813,15 +8771,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertFalse(mPreview.isVideoRecording());
             assertFalse(mActivity.popupIsOpen());
 
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
             fail();
         }
 
         // now open popup again
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
         subTestPopupButtonAvailability();
     }
@@ -8834,7 +8791,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestVideoPopup(false);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -8857,7 +8814,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         subTestVideoPopup(true);
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -8873,11 +8830,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mPreview.supportsFlash() ) {
+        if (!mPreview.supportsFlash()) {
             Log.d(TAG, "doesn't support flash");
             return;
-        }
-        else if( !mPreview.supportsFocus() ) {
+        } else if (!mPreview.supportsFocus()) {
             Log.d(TAG, "doesn't support focus");
             return;
         }
@@ -8885,10 +8841,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         switchToFlashValue("flash_auto");
 
         // open popup
-        assertFalse( mActivity.popupIsOpen() );
+        assertFalse(mActivity.popupIsOpen());
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_FUNCTION);
         getInstrumentation().waitForIdleSync();
-        assertTrue( mActivity.popupIsOpen() );
+        assertTrue(mActivity.popupIsOpen());
 
         // arrow down
         assertFalse(mActivity.getMainUI().testGetRemoteControlMode());
@@ -8990,7 +8946,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_NUMPAD_5);
         getInstrumentation().waitForIdleSync();
         Thread.sleep(500);
-        assertFalse( mActivity.popupIsOpen() );
+        assertFalse(mActivity.popupIsOpen());
         assertEquals("flash_off", mPreview.getCurrentFlashValue());
         assertFalse(mActivity.getMainUI().testGetRemoteControlMode());
         assertFalse(mActivity.getMainUI().selectingLines());
@@ -8999,13 +8955,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Thread.sleep(500);
 
         // open exposure panel
-        assertFalse( mActivity.getMainUI().isExposureUIOpen() );
+        assertFalse(mActivity.getMainUI().isExposureUIOpen());
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_SLASH);
         getInstrumentation().waitForIdleSync();
-        assertTrue( mActivity.getMainUI().isExposureUIOpen() );
+        assertTrue(mActivity.getMainUI().isExposureUIOpen());
 
         assertFalse(mActivity.getMainUI().testGetRemoteControlMode());
-        if( mPreview.supportsISORange() || mPreview.getSupportedISOs() != null ) {
+        if (mPreview.supportsISORange() || mPreview.getSupportedISOs() != null) {
             // need to skip past the ISO line
             assertFalse(mActivity.getMainUI().selectingLines());
             assertFalse(mActivity.getMainUI().selectingIcons());
@@ -9045,26 +9001,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(3, mActivity.getMainUI().testGetExposureLine());
 
         // arrow down
-        for(int i=0;i<6;i++) {
+        for (int i = 0; i < 6; i++) {
             assertEquals(-i, mPreview.getCurrentExposure());
-            getInstrumentation().sendKeyDownUpSync((i%2==0) ? KeyEvent.KEYCODE_NUMPAD_2 : KeyEvent.KEYCODE_DPAD_DOWN);
+            getInstrumentation().sendKeyDownUpSync((i % 2 == 0) ? KeyEvent.KEYCODE_NUMPAD_2 : KeyEvent.KEYCODE_DPAD_DOWN);
             getInstrumentation().waitForIdleSync();
-            assertEquals(-(i+1), mPreview.getCurrentExposure());
+            assertEquals(-(i + 1), mPreview.getCurrentExposure());
         }
 
         // arrow up
-        for(int i=0;i<6;i++) {
-            assertEquals(-6+i, mPreview.getCurrentExposure());
-            getInstrumentation().sendKeyDownUpSync((i%2==0) ? KeyEvent.KEYCODE_NUMPAD_8 : KeyEvent.KEYCODE_DPAD_UP);
+        for (int i = 0; i < 6; i++) {
+            assertEquals(-6 + i, mPreview.getCurrentExposure());
+            getInstrumentation().sendKeyDownUpSync((i % 2 == 0) ? KeyEvent.KEYCODE_NUMPAD_8 : KeyEvent.KEYCODE_DPAD_UP);
             getInstrumentation().waitForIdleSync();
-            assertEquals(-6+(i+1), mPreview.getCurrentExposure());
+            assertEquals(-6 + (i + 1), mPreview.getCurrentExposure());
         }
 
         // close exposure panel
-        assertTrue( mActivity.getMainUI().isExposureUIOpen() );
+        assertTrue(mActivity.getMainUI().isExposureUIOpen());
         getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_SLASH);
         getInstrumentation().waitForIdleSync();
-        assertFalse( mActivity.getMainUI().isExposureUIOpen() );
+        assertFalse(mActivity.getMainUI().isExposureUIOpen());
 
         // take photo
         assertEquals(0, mPreview.count_cameraTakePicture);
@@ -9223,8 +9179,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             n_new_files = getNFiles() - n_files;
             Log.d(TAG, "n_new_files: " + n_new_files);
             assertEquals(8, n_new_files);
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
             fail();
         }
@@ -9237,14 +9192,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
         List<CameraController.Size> picture_sizes = mPreview.getSupportedPictureSizes(true);
 
         // change back camera to the last size
-        CameraController.Size size = picture_sizes.get(picture_sizes.size()-1);
+        CameraController.Size size = picture_sizes.get(picture_sizes.size() - 1);
         {
             Log.d(TAG, "set size to " + size.width + " x " + size.height);
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -9270,7 +9225,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<CameraController.Size> front_picture_sizes = mPreview.getSupportedPictureSizes(true);
 
         // change front camera to the last size
-        CameraController.Size front_size = front_picture_sizes.get(front_picture_sizes.size()-1);
+        CameraController.Size front_size = front_picture_sizes.get(front_picture_sizes.size() - 1);
         {
             Log.d(TAG, "set front_size to " + front_size.width + " x " + front_size.height);
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
@@ -9319,19 +9274,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(size, new_size);
     }
 
-    /** Tests the Exif tags in the resultant file. If the file is null, the uri will be
-     *  used instead to read the Exif tags.
+    /**
+     * Tests the Exif tags in the resultant file. If the file is null, the uri will be
+     * used instead to read the Exif tags.
      */
     private void testExif(String file, Uri uri, boolean expect_gps) throws IOException {
         //final String TAG_GPS_IMG_DIRECTION = "GPSImgDirection";
         //final String TAG_GPS_IMG_DIRECTION_REF = "GPSImgDirectionRef";
         InputStream inputStream = null;
         ExifInterface exif;
-        if( file != null ) {
+        if (file != null) {
             assertNull(uri); // should only supply one of file or uri
             exif = new ExifInterface(file);
-        }
-        else {
+        } else {
             assertNotNull(uri);
             inputStream = getActivity().getContentResolver().openInputStream(uri);
             exif = new ExifInterface(inputStream);
@@ -9340,7 +9295,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(exif.getAttribute(ExifInterface.TAG_ORIENTATION));
         assertNotNull(exif.getAttribute(ExifInterface.TAG_MAKE));
         assertNotNull(exif.getAttribute(ExifInterface.TAG_MODEL));
-        if( expect_gps ) {
+        if (expect_gps) {
             assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
             assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF));
             assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
@@ -9348,8 +9303,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             // can't read custom tags, even though we can write them?!
             //assertTrue(exif.getAttribute(TAG_GPS_IMG_DIRECTION) != null);
             //assertTrue(exif.getAttribute(TAG_GPS_IMG_DIRECTION_REF) != null);
-        }
-        else {
+        } else {
             assertNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
             assertNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF));
             assertNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
@@ -9359,7 +9313,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             //assertTrue(exif.getAttribute(TAG_GPS_IMG_DIRECTION_REF) == null);
         }
 
-        if( inputStream != null ) {
+        if (inputStream != null) {
             inputStream.close();
         }
     }
@@ -9375,7 +9329,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PreferenceKeys.LocationPreferenceKey, true);
-            if( gps_direction ) {
+            if (gps_direction) {
                 editor.putBoolean(PreferenceKeys.GPSDirectionPreferenceKey, true);
             }
             editor.apply();
@@ -9388,9 +9342,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "wait until received location");
 
         long start_t = System.currentTimeMillis();
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
             this.getInstrumentation().waitForIdleSync();
-            if( System.currentTimeMillis() - start_t > 20000 ) {
+            if (System.currentTimeMillis() - start_t > 20000) {
                 // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                 fail();
             }
@@ -9432,7 +9386,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         testExif(mActivity.test_last_saved_image, mActivity.test_last_saved_imageuri, true);
 
         // switch to front camera
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
             waitUntilCameraOpened();
@@ -9470,7 +9424,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testLocationOnSAF() throws IOException {
         Log.d(TAG, "testLocationOnSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -9491,7 +9445,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     private void subTestLocationOff(boolean gps_direction) throws IOException {
         setToDefault();
 
-        if( gps_direction ) {
+        if (gps_direction) {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean(PreferenceKeys.GPSDirectionPreferenceKey, true);
@@ -9562,7 +9516,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNull(mActivity.getLocationSupplier().getLocation());
 
         // switch to front camera
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             int cameraId = mPreview.getCameraId();
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -9591,9 +9545,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
 
         long start_t = System.currentTimeMillis();
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
             this.getInstrumentation().waitForIdleSync();
-            if( System.currentTimeMillis() - start_t > 20000 ) {
+            if (System.currentTimeMillis() - start_t > 20000) {
                 // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                 fail();
             }
@@ -9602,7 +9556,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(mActivity.getLocationSupplier().getLocation());
 
         // switch to front camera
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
             waitUntilCameraOpened();
@@ -9637,7 +9591,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     public void testDirectionOnSAF() throws IOException {
         Log.d(TAG, "testDirectionOnSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -9681,9 +9635,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "wait until received location");
 
         long start_t = System.currentTimeMillis();
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
             this.getInstrumentation().waitForIdleSync();
-            if( System.currentTimeMillis() - start_t > 20000 ) {
+            if (System.currentTimeMillis() - start_t > 20000) {
                 // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                 fail();
             }
@@ -9712,7 +9666,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // now check we're not listening for location, or opening camera
         start_t = System.currentTimeMillis();
         int count = 0;
-        while( System.currentTimeMillis() - start_t <= 15000 ) {
+        while (System.currentTimeMillis() - start_t <= 15000) {
             assertFalse(mPreview.isOpeningCamera());
             assertFalse(mPreview.openCameraAttempted());
             assertNull(mPreview.getCameraController());
@@ -9721,7 +9675,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertFalse(mActivity.getLocationSupplier().testHasReceivedLocation());
             assertNull(mActivity.getLocationSupplier().getLocation());
             Thread.sleep(10);
-            if( count++ == 5 ) {
+            if (count++ == 5) {
                 pauseAndResume(); // check we still don't listen for location after pause and resume
             }
         }
@@ -9756,9 +9710,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(mPreview.getCameraController());
 
         // check we get a non-cached location
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
             this.getInstrumentation().waitForIdleSync();
-            if( System.currentTimeMillis() - start_t > 20000 ) {
+            if (System.currentTimeMillis() - start_t > 20000) {
                 // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                 fail();
             }
@@ -9773,7 +9727,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // now test repeatedly going to settings and back - guard against crash we had where onLocationChanged got called one more time after
         // location listeners had been freed
-        for(int i=0;i<20;i++) {
+        for (int i = 0; i < 20; i++) {
             assertTrue(mActivity.getLocationSupplier().hasLocationListeners());
             Thread.sleep((i % 5) * 100);
 
@@ -9848,11 +9802,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             updateForSettings();
         }
 
-        assertTrue( mActivity.getLocationSupplier().hasLocationListeners() );
+        assertTrue(mActivity.getLocationSupplier().hasLocationListeners());
         long start_t = System.currentTimeMillis();
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
             this.getInstrumentation().waitForIdleSync();
-            if( System.currentTimeMillis() - start_t > 20000 ) {
+            if (System.currentTimeMillis() - start_t > 20000) {
                 // need to allow long time for testing devices without mobile network; will likely fail altogether if don't even have wifi
                 fail();
             }
@@ -9879,8 +9833,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             updateForSettings();
         }
 
-        assertTrue( mActivity.getLocationSupplier().hasLocationListeners() );
-        while( !mActivity.getLocationSupplier().testHasReceivedLocation() ) {
+        assertTrue(mActivity.getLocationSupplier().hasLocationListeners());
+        while (!mActivity.getLocationSupplier().testHasReceivedLocation()) {
         }
         this.getInstrumentation().waitForIdleSync();
         assertNotNull(mActivity.getLocationSupplier().getLocation());
@@ -9932,14 +9886,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPhotoStamp();
     }
 
-    /** As testPhotoStamp() but with SAF.
-     *  If this test fails, make sure we've manually selected that folder (as permission can't be given through the test
-     *  framework).
+    /**
+     * As testPhotoStamp() but with SAF.
+     * If this test fails, make sure we've manually selected that folder (as permission can't be given through the test
+     * framework).
      */
     public void testPhotoStampSAF() throws IOException {
         Log.d(TAG, "testPhotoStampSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -10007,7 +9962,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testZoom");
         setToDefault();
 
-        if( !mPreview.supportsZoom() ) {
+        if (!mPreview.supportsZoom()) {
             Log.d(TAG, "zoom not supported");
             return;
         }
@@ -10026,7 +9981,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "actual zoom = " + mPreview.getCameraController().getZoom());
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
 
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             assertFalse(mPreview.hasFocusArea());
             assertNull(mPreview.getCameraController().getFocusAreas());
             assertNull(mPreview.getCameraController().getMeteringAreas());
@@ -10063,7 +10018,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(mPreview.getCameraController().getZoom(), max_zoom);
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
 
-        mPreview.scaleZoom(1.0f/10000.0f);
+        mPreview.scaleZoom(1.0f / 10000.0f);
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "compare actual zoom " + mPreview.getCameraController().getZoom() + " to zero");
         assertEquals(0, mPreview.getCameraController().getZoom());
@@ -10077,7 +10032,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "compare actual zoom " + mPreview.getCameraController().getZoom() + " to max_zoom " + max_zoom);
         assertEquals(mPreview.getCameraController().getZoom(), max_zoom);
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             // check that focus areas cleared
             assertFalse(mPreview.hasFocusArea());
             assertNull(mPreview.getCameraController().getFocusAreas());
@@ -10123,7 +10078,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "compare actual zoom " + mPreview.getCameraController().getZoom() + " to zoom " + zoom);
         assertEquals(mPreview.getCameraController().getZoom(), zoom + 1);
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             // check that focus areas cleared
             assertFalse(mPreview.hasFocusArea());
             assertNull(mPreview.getCameraController().getFocusAreas());
@@ -10144,7 +10099,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "compare actual zoom " + mPreview.getCameraController().getZoom() + " to zoom " + zoom);
         assertEquals(mPreview.getCameraController().getZoom(), zoom);
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
-        if( mPreview.supportsFocus() ) {
+        if (mPreview.supportsFocus()) {
             // check that focus areas cleared
             assertFalse(mPreview.hasFocusArea());
             assertNull(mPreview.getCameraController().getFocusAreas());
@@ -10185,7 +10140,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testZoomIdle");
         setToDefault();
 
-        if( !mPreview.supportsZoom() ) {
+        if (!mPreview.supportsZoom()) {
             Log.d(TAG, "zoom not supported");
             return;
         }
@@ -10212,11 +10167,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testZoomSwitchCamera");
         setToDefault();
 
-        if( !mPreview.supportsZoom() ) {
+        if (!mPreview.supportsZoom()) {
             Log.d(TAG, "zoom not supported");
             return;
-        }
-        else if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        } else if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
@@ -10245,13 +10199,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(max_zoom - zoomSeekBar.getProgress(), mPreview.getCameraController().getZoom());
     }
 
-    /** Switch to front camera, pause and resume, check still on the front camera.
+    /**
+     * Switch to front camera, pause and resume, check still on the front camera.
      */
     public void testSwitchCameraIdle() {
         Log.d(TAG, "testSwitchCameraIdle");
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
@@ -10270,7 +10225,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     }
 
-    /** Tests touching the screen before camera has opened.
+    /**
+     * Tests touching the screen before camera has opened.
      */
     public void testTouchFocusQuick() {
         Log.d(TAG, "testTouchFocusQuick");
@@ -10278,24 +10234,25 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         pauseAndResume(false); // don't wait for camera to be reopened, as we want to test touch focus whilst it's opening
 
-        for(int i=0;i<10;i++) {
+        for (int i = 0; i < 10; i++) {
             TouchUtils.clickView(MainActivityTest.this, mPreview.getView());
         }
     }
 
-    /** Tests trying to switch camera repeatedly, without waiting for camera to open.
+    /**
+     * Tests trying to switch camera repeatedly, without waiting for camera to open.
      */
     public void testSwitchCameraRepeat() {
         Log.d(TAG, "testSwitchCameraRepeat");
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
         View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
         clickView(switchCameraButton);
-        for(int i=0;i<100;i++) {
+        for (int i = 0; i < 100; i++) {
             clickView(switchCameraButton);
         }
         waitUntilCameraOpened();
@@ -10312,14 +10269,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testSwitchCameraRepeat2");
         setToDefault();
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
         View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
         int cameraId = mPreview.getCameraId();
 
-        for(int i=0;i<130;i++) {
+        for (int i = 0; i < 130; i++) {
             Log.d(TAG, "i = " + i);
 
             clickView(switchCameraButton);
@@ -10412,7 +10369,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals("", new_string);
 
         // now load settings
-        assertTrue( mActivity.getSettingsManager().loadSettings(mActivity.test_save_settings_file) );
+        assertTrue(mActivity.getSettingsManager().loadSettings(mActivity.test_save_settings_file));
 
         // wait - n.b., loadSettings() won't restart due to being test code
         Thread.sleep(3000);
@@ -10441,16 +10398,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
-            if( use_saf ) {
+            if (use_saf) {
                 editor.putBoolean(PreferenceKeys.UsingSAFPreferenceKey, true);
                 editor.putString(PreferenceKeys.SaveLocationSAFPreferenceKey, save_folder);
-            }
-            else {
+            } else {
                 editor.putString(PreferenceKeys.SaveLocationPreferenceKey, save_folder);
             }
             editor.apply();
             updateForSettings();
-            if( use_saf ) {
+            if (use_saf) {
                 // need to call this directly, as we don't call mActivity.onActivityResult
                 mActivity.updateFolderHistorySAF(save_folder);
             }
@@ -10462,20 +10418,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(save_location_history.get(save_location_history.size() - 1), save_folder);
 
         File folder = mActivity.getImageFolder();
-        if( folder.exists() && delete_folder ) {
+        if (folder.exists() && delete_folder) {
             // Note when using scoped storage, this won't actually work (although the test code won't fail)
             // It's not possible to delete folders with scoped storage unless via SAF which would need permission to have been
             // given to such folders.
             assertTrue(folder.isDirectory());
             // delete folder - need to delete contents first
-            if( folder.isDirectory() ) {
-                String [] children = folder.list();
-                if( children != null ) {
-                    for(String child : children) {
+            if (folder.isDirectory()) {
+                String[] children = folder.list();
+                if (children != null) {
+                    for (String child : children) {
                         File file = new File(folder, child);
                         //noinspection ResultOfMethodCallIgnored
                         file.delete();
-                        MediaScannerConnection.scanFile(mActivity, new String[] { file.getAbsolutePath() }, null, null);
+                        MediaScannerConnection.scanFile(mActivity, new String[]{file.getAbsolutePath()}, null, null);
                     }
                 }
             }
@@ -10507,44 +10463,47 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         {
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
             SharedPreferences.Editor editor = settings.edit();
-            if( use_saf ) {
+            if (use_saf) {
                 editor.putString(PreferenceKeys.SaveLocationSAFPreferenceKey, "content://com.android.externalstorage.documents/tree/primary%3ADCIM%2FOpenCamera");
-            }
-            else {
+            } else {
                 editor.putString(PreferenceKeys.SaveLocationPreferenceKey, "OpenCamera");
             }
             editor.apply();
         }
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     public void testCreateSaveFolder1() {
         Log.d(TAG, "testCreateSaveFolder1");
         subTestCreateSaveFolder(false, "OpenCameraTest", true);
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     public void testCreateSaveFolder2() {
         Log.d(TAG, "testCreateSaveFolder2");
         subTestCreateSaveFolder(false, "OpenCameraTest/", true);
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     public void testCreateSaveFolder3() {
         Log.d(TAG, "testCreateSaveFolder3");
         subTestCreateSaveFolder(false, "OpenCameraTest_a/OpenCameraTest_b", true);
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     @SuppressLint("SdCardPath")
     public void testCreateSaveFolder4() {
         Log.d(TAG, "testCreateSaveFolder4");
 
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             // can't save outside DCIM when using scoped storage
             return;
         }
@@ -10552,27 +10511,30 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestCreateSaveFolder(false, "/sdcard/Pictures/OpenCameraTest", true);
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     public void testCreateSaveFolderUnicode() {
         Log.d(TAG, "testCreateSaveFolderUnicode");
         subTestCreateSaveFolder(false, "éúíóá!£$%^&()", true);
     }
 
-    /** Tests taking a photo with a new save folder.
+    /**
+     * Tests taking a photo with a new save folder.
      */
     public void testCreateSaveFolderEmpty() {
         Log.d(TAG, "testCreateSaveFolderEmpty");
         subTestCreateSaveFolder(false, "", false);
     }
 
-    /** Tests taking a photo with a new save folder.
-     *  If this test fails, make sure we've manually selected that folder (as permission can't be given through the test framework).
+    /**
+     * Tests taking a photo with a new save folder.
+     * If this test fails, make sure we've manually selected that folder (as permission can't be given through the test framework).
      */
     public void testCreateSaveFolderSAF() {
         Log.d(TAG, "testCreateSaveFolderSAF");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -10580,8 +10542,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestCreateSaveFolder(true, "content://com.android.externalstorage.documents/tree/primary%3ADCIM", true);
     }
 
-    /** Tests code for checking existing non-SAF save locations, when updating to scoped storage.
-     *  Case where save location is invalid for scoped storage.
+    /**
+     * Tests code for checking existing non-SAF save locations, when updating to scoped storage.
+     * Case where save location is invalid for scoped storage.
      */
     public void testScopedStorageChecks1() {
         Log.d(TAG, "testScopedStorageChecks1");
@@ -10604,7 +10567,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         restart();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity);
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             assertEquals("OpenCamera", sharedPreferences.getString(PreferenceKeys.SaveLocationPreferenceKey, "OpenCamera"));
             // because the save folder is reset to "OpenCamera", we've also removed it from the original position in the history
             assertEquals("", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_0", null));
@@ -10613,8 +10576,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             // invalid entry removed here
             assertEquals("OpenCamera", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_3", null));
             assertEquals(4, sharedPreferences.getInt(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_size", 0));
-        }
-        else {
+        } else {
             // should be unchanged
             assertEquals("/storage/emulated/0/Pictures/Camera", sharedPreferences.getString(PreferenceKeys.SaveLocationPreferenceKey, "OpenCamera"));
             assertEquals("OpenCamera", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_0", null));
@@ -10627,8 +10589,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    /** Tests code for checking existing non-SAF save locations, when updating to scoped storage.
-     *  This test a version where everything is valid and shouldn't change.
+    /**
+     * Tests code for checking existing non-SAF save locations, when updating to scoped storage.
+     * This test a version where everything is valid and shouldn't change.
      */
     public void testScopedStorageChecks2() {
         Log.d(TAG, "testScopedStorageChecks2");
@@ -10655,8 +10618,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(3, sharedPreferences.getInt(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_size", 0));
     }
 
-    /** Tests code for checking existing non-SAF save locations, when updating to scoped storage.
-     *  This tests a version with default settings, where nothing should change.
+    /**
+     * Tests code for checking existing non-SAF save locations, when updating to scoped storage.
+     * This tests a version with default settings, where nothing should change.
      */
     public void testScopedStorageChecks3() {
         Log.d(TAG, "testScopedStorageChecks3");
@@ -10670,8 +10634,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(1, sharedPreferences.getInt(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_size", 0));
     }
 
-    /** Tests code for checking existing non-SAF save locations, when updating to scoped storage.
-     *  Case where save location contains sub-folder, so is valid but needs updating for scoped storage.
+    /**
+     * Tests code for checking existing non-SAF save locations, when updating to scoped storage.
+     * Case where save location contains sub-folder, so is valid but needs updating for scoped storage.
      */
     public void testScopedStorageChecks4() {
         Log.d(TAG, "testScopedStorageChecks4");
@@ -10693,7 +10658,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         restart();
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mActivity);
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             assertEquals("OpenCamera/subfolder", sharedPreferences.getString(PreferenceKeys.SaveLocationPreferenceKey, "OpenCamera"));
             assertEquals("OpenCamera/subfolder/subfolder", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_0", null));
             // invalid entry removed here
@@ -10701,8 +10666,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertEquals("OpenCamera", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_1", null));
             assertEquals("OpenCamera/subfolder", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_2", null));
             assertEquals(3, sharedPreferences.getInt(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_size", 0));
-        }
-        else {
+        } else {
             // should be unchanged
             assertEquals("/storage/emulated/0/DCIM/OpenCamera/subfolder", sharedPreferences.getString(PreferenceKeys.SaveLocationPreferenceKey, "OpenCamera"));
             assertEquals("/storage/emulated/0/DCIM/OpenCamera/subfolder/subfolder", sharedPreferences.getString(PreferenceKeys.SaveLocationHistoryBasePreferenceKey + "_0", null));
@@ -10714,12 +10678,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    /** Tests launching the folder chooser on a new folder.
+    /**
+     * Tests launching the folder chooser on a new folder.
      */
     public void testFolderChooserNew() throws InterruptedException {
         Log.d(TAG, "testFolderChooserNew");
 
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             Log.d(TAG, "folder chooser not relevant for scoped storage");
             return;
         }
@@ -10735,17 +10700,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
 
         File folder = mActivity.getImageFolder();
-        if( folder.exists() ) {
+        if (folder.exists()) {
             assertTrue(folder.isDirectory());
             // delete folder - need to delete contents first
-            if( folder.isDirectory() ) {
-                String [] children = folder.list();
-                if( children != null ) {
-                    for(String child : children) {
+            if (folder.isDirectory()) {
+                String[] children = folder.list();
+                if (children != null) {
+                    for (String child : children) {
                         File file = new File(folder, child);
                         //noinspection ResultOfMethodCallIgnored
                         file.delete();
-                        MediaScannerConnection.scanFile(mActivity, new String[] { file.getAbsolutePath() }, null, null);
+                        MediaScannerConnection.scanFile(mActivity, new String[]{file.getAbsolutePath()}, null, null);
                     }
                 }
             }
@@ -10754,7 +10719,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
 
         FolderChooserDialog fragment = new FolderChooserDialog();
-		fragment.setStartFolder(mActivity.getImageFolder());
+        fragment.setStartFolder(mActivity.getImageFolder());
         fragment.show(mActivity.getFragmentManager(), "FOLDER_FRAGMENT");
         Thread.sleep(1000); // wait until folderchooser started up
         Log.d(TAG, "started folderchooser");
@@ -10763,13 +10728,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(folder.exists());
     }
 
-    /** Tests launching the folder chooser on a folder we don't have access to.
+    /**
+     * Tests launching the folder chooser on a folder we don't have access to.
      * (Shouldn't be possible to get into this state, but just in case.)
      */
     public void testFolderChooserInvalid() throws InterruptedException {
         Log.d(TAG, "testFolderChooserInvalid");
 
-        if( MainActivity.useScopedStorage() ) {
+        if (MainActivity.useScopedStorage()) {
             Log.d(TAG, "folder chooser not relevant for scoped storage");
             return;
         }
@@ -10785,7 +10751,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
 
         FolderChooserDialog fragment = new FolderChooserDialog();
-		fragment.setStartFolder(mActivity.getImageFolder());
+        fragment.setStartFolder(mActivity.getImageFolder());
         fragment.show(mActivity.getFragmentManager(), "FOLDER_FRAGMENT");
         Thread.sleep(1000); // wait until folderchooser started up
         Log.d(TAG, "started folderchooser");
@@ -10799,7 +10765,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
                 Log.d(TAG, "clearFolderHistory");
-                if( use_saf )
+                if (use_saf)
                     mActivity.clearFolderHistorySAF();
                 else
                     mActivity.clearFolderHistory();
@@ -10825,14 +10791,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             editor.putString(use_saf ? PreferenceKeys.SaveLocationSAFPreferenceKey : PreferenceKeys.SaveLocationPreferenceKey, "new_folder_history_entry");
             editor.apply();
             updateForSettings();
-            if( use_saf ) {
+            if (use_saf) {
                 // need to call this directly, as we don't call mActivity.onActivityResult
                 mActivity.updateFolderHistorySAF("new_folder_history_entry");
             }
         }
         save_location_history = use_saf ? mActivity.getSaveLocationHistorySAF() : mActivity.getSaveLocationHistory();
         Log.d(TAG, "save_location_history size: " + save_location_history.size());
-        for(int i=0;i<save_location_history.size();i++) {
+        for (int i = 0; i < save_location_history.size(); i++) {
             Log.d(TAG, save_location_history.get(i));
         }
         assertEquals(2, save_location_history.size());
@@ -10843,7 +10809,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         save_location_history = use_saf ? mActivity.getSaveLocationHistorySAF() : mActivity.getSaveLocationHistory();
         Log.d(TAG, "save_location_history size: " + save_location_history.size());
-        for(int i=0;i<save_location_history.size();i++) {
+        for (int i = 0; i < save_location_history.size(); i++) {
             Log.d(TAG, save_location_history.get(i));
         }
         assertEquals(2, save_location_history.size());
@@ -10861,11 +10827,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             final String current_folder_f = current_folder;
             mActivity.runOnUiThread(new Runnable() {
                 public void run() {
-                    if( use_saf ) {
+                    if (use_saf) {
                         // need to call this directly, as we don't call mActivity.onActivityResult
                         mActivity.updateFolderHistorySAF(current_folder_f);
-                    }
-                    else {
+                    } else {
                         mActivity.usedFolderPicker();
                     }
                 }
@@ -10881,7 +10846,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // clearFolderHistory has code that must be run on UI thread
         mActivity.runOnUiThread(new Runnable() {
             public void run() {
-                if( use_saf )
+                if (use_saf)
                     mActivity.clearFolderHistorySAF();
                 else
                     mActivity.clearFolderHistory();
@@ -10905,7 +10870,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "testSaveFolderHistorySAF");
         setToDefault();
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "SAF requires Android Lollipop or better");
             return;
         }
@@ -10950,21 +10915,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
 
         List<String> scene_modes = mPreview.getSupportedSceneModes();
-        if( scene_modes == null ) {
+        if (scene_modes == null) {
             return;
         }
         Log.d(TAG, "scene mode: " + mPreview.getCameraController().getSceneMode());
-        assertTrue( mPreview.getCameraController().getSceneMode() == null || mPreview.getCameraController().getSceneMode().equals(CameraController.SCENE_MODE_DEFAULT) );
+        assertTrue(mPreview.getCameraController().getSceneMode() == null || mPreview.getCameraController().getSceneMode().equals(CameraController.SCENE_MODE_DEFAULT));
 
         String scene_mode = null;
         // find a scene mode that isn't default
-        for(String this_scene_mode : scene_modes) {
-            if( !this_scene_mode.equals(CameraController.SCENE_MODE_DEFAULT) ) {
+        for (String this_scene_mode : scene_modes) {
+            if (!this_scene_mode.equals(CameraController.SCENE_MODE_DEFAULT)) {
                 scene_mode = this_scene_mode;
                 break;
             }
         }
-        if( scene_mode == null ) {
+        if (scene_mode == null) {
             return;
         }
         Log.d(TAG, "change to scene_mode: " + scene_mode);
@@ -11002,21 +10967,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
 
         List<String> color_effects = mPreview.getSupportedColorEffects();
-        if( color_effects == null ) {
+        if (color_effects == null) {
             return;
         }
         Log.d(TAG, "color effect: " + mPreview.getCameraController().getColorEffect());
-        assertTrue( mPreview.getCameraController().getColorEffect() == null || mPreview.getCameraController().getColorEffect().equals(CameraController.COLOR_EFFECT_DEFAULT) );
+        assertTrue(mPreview.getCameraController().getColorEffect() == null || mPreview.getCameraController().getColorEffect().equals(CameraController.COLOR_EFFECT_DEFAULT));
 
         String color_effect = null;
         // find a color effect that isn't default
-        for(String this_color_effect : color_effects) {
-            if( !this_color_effect.equals(CameraController.COLOR_EFFECT_DEFAULT) ) {
+        for (String this_color_effect : color_effects) {
+            if (!this_color_effect.equals(CameraController.COLOR_EFFECT_DEFAULT)) {
                 color_effect = this_color_effect;
                 break;
             }
         }
-        if( color_effect == null ) {
+        if (color_effect == null) {
             return;
         }
         Log.d(TAG, "change to color_effect: " + color_effect);
@@ -11038,21 +11003,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
 
         List<String> white_balances = mPreview.getSupportedWhiteBalances();
-        if( white_balances == null ) {
+        if (white_balances == null) {
             return;
         }
         Log.d(TAG, "white balance: " + mPreview.getCameraController().getWhiteBalance());
-        assertTrue( mPreview.getCameraController().getWhiteBalance() == null || mPreview.getCameraController().getWhiteBalance().equals(CameraController.WHITE_BALANCE_DEFAULT) );
+        assertTrue(mPreview.getCameraController().getWhiteBalance() == null || mPreview.getCameraController().getWhiteBalance().equals(CameraController.WHITE_BALANCE_DEFAULT));
 
         String white_balance = null;
         // find a white balance that isn't default
-        for(String this_white_balances : white_balances) {
-            if( !this_white_balances.equals(CameraController.WHITE_BALANCE_DEFAULT) ) {
+        for (String this_white_balances : white_balances) {
+            if (!this_white_balances.equals(CameraController.WHITE_BALANCE_DEFAULT)) {
                 white_balance = this_white_balances;
                 break;
             }
         }
-        if( white_balance == null ) {
+        if (white_balance == null) {
             return;
         }
         Log.d(TAG, "change to white_balance: " + white_balance);
@@ -11084,10 +11049,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(100, quality);
     }
 
-    /** Note this test fails on Android emulator with old camera API, because we get a
-     *  RuntimeException from setParameters when trying to set white balance (we catch the
-     *  exception, but the test fails because the white balance hasn't been changed to the expected
-     *  value).
+    /**
+     * Note this test fails on Android emulator with old camera API, because we get a
+     * RuntimeException from setParameters when trying to set white balance (we catch the
+     * exception, but the test fails because the white balance hasn't been changed to the expected
+     * value).
      */
     public void testCameraModes() {
         Log.d(TAG, "testCameraModes");
@@ -11097,7 +11063,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestImageQuality();
     }
 
-    /** Tests that changing resolutions doesn't close the popup.
+    /**
+     * Tests that changing resolutions doesn't close the popup.
      */
     public void testSwitchResolution() throws InterruptedException {
         Log.d(TAG, "testSwitchResolution");
@@ -11108,12 +11075,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         CameraController.Size old_picture_size = mPreview.getCameraController().getPictureSize();
 
         // open popup
-        assertFalse( mActivity.popupIsOpen() );
+        assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
-        TextView photoResolutionButton = (TextView)mActivity.getUIButton("PHOTO_RESOLUTIONS");
+        TextView photoResolutionButton = (TextView) mActivity.getUIButton("PHOTO_RESOLUTIONS");
         assertNotNull(photoResolutionButton);
         //String exp_size_string = old_picture_size.width + " x " + old_picture_size.height + " " + Preview.getMPString(old_picture_size.width, old_picture_size.height);
         //String exp_size_string = old_picture_size.width + " x " + old_picture_size.height;
@@ -11133,7 +11100,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "old picture size: " + old_picture_size.width + " x " + old_picture_size.height);
         Log.d(TAG, "old new_picture_size size: " + new_picture_size.width + " x " + new_picture_size.height);
         assertFalse(new_picture_size.equals(old_picture_size));
-        assertTrue( mActivity.popupIsOpen() );
+        assertTrue(mActivity.popupIsOpen());
 
         //exp_size_string = new_picture_size.width + " x " + new_picture_size.height + " " + Preview.getMPString(new_picture_size.width, new_picture_size.height);
         //exp_size_string = new_picture_size.width + " x " + new_picture_size.height;
@@ -11148,12 +11115,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mPreview.isVideo());
 
         // open popup
-        assertFalse( mActivity.popupIsOpen() );
+        assertFalse(mActivity.popupIsOpen());
         clickView(popupButton);
-        while( !mActivity.popupIsOpen() ) {
+        while (!mActivity.popupIsOpen()) {
         }
 
-        TextView videoResolutionButton = (TextView)mActivity.getUIButton("VIDEO_RESOLUTIONS");
+        TextView videoResolutionButton = (TextView) mActivity.getUIButton("VIDEO_RESOLUTIONS");
         assertNotNull(videoResolutionButton);
         CharSequence oldVideoResolutionString = videoResolutionButton.getText();
 
@@ -11164,7 +11131,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // check
         Thread.sleep(500);
-        assertTrue( mActivity.popupIsOpen() );
+        assertTrue(mActivity.popupIsOpen());
         assertFalse(videoResolutionButton.getText().equals(oldVideoResolutionString));
 
     }
@@ -11181,7 +11148,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mPreview.test_fail_open_camera = true;
 
         // can't test on startup, as camera is created when we create activity, so instead test by switching camera
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() > 1) {
             Log.d(TAG, "switch camera");
             View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
             clickView(switchCameraButton);
@@ -11189,15 +11156,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             assertNotNull(mPreview.getCameraControllerManager());
             assertNull(mPreview.getCameraController());
             this.getInstrumentation().waitForIdleSync();
-        
-            assertFalse( mActivity.popupIsOpen() );
+
+            assertFalse(mActivity.popupIsOpen());
             View popupButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.popup);
             Log.d(TAG, "about to click popup");
             clickView(popupButton);
             Log.d(TAG, "done clicking popup");
             Thread.sleep(500);
             // if camera isn't opened, popup shouldn't open
-            assertFalse( mActivity.popupIsOpen() );
+            assertFalse(mActivity.popupIsOpen());
 
             View settingsButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.settings);
             Log.d(TAG, "about to click settings");
@@ -11219,7 +11186,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsDRO() ) {
+        if (!mActivity.supportsDRO()) {
             return;
         }
 
@@ -11261,7 +11228,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsDRO() ) {
+        if (!mActivity.supportsDRO()) {
             return;
         }
 
@@ -11289,14 +11256,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(90, mActivity.getApplicationInterface().getImageQualityPref());
     }
 
-    /** Tests restarting in HDR mode.
+    /**
+     * Tests restarting in HDR mode.
      */
     public void testHDRRestart() {
         Log.d(TAG, "testHDRRestart");
         setToDefault();
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.Standard);
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -11315,7 +11283,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -11327,20 +11295,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Tests taking photo in HDR photo mode with saving base expo images.
+    /**
+     * Tests taking photo in HDR photo mode with saving base expo images.
      */
     public void testTakePhotoHDRSaveExpo() throws InterruptedException {
         Log.d(TAG, "testTakePhotoHDRSaveExpo");
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -11353,23 +11322,24 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Tests taking photo in HDR photo mode with saving base expo images, with RAW.
+    /**
+     * Tests taking photo in HDR photo mode with saving base expo images, with RAW.
      */
     public void testTakePhotoHDRSaveExpoRaw() throws InterruptedException {
         Log.d(TAG, "testTakePhotoHDRSaveExpoRaw");
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -11383,23 +11353,24 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, true, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Tests taking photo in HDR photo mode with saving base expo images, with RAW only.
+    /**
+     * Tests taking photo in HDR photo mode with saving base expo images, with RAW only.
      */
     public void testTakePhotoHDRSaveExpoRawOnly() throws InterruptedException {
         Log.d(TAG, "testTakePhotoHDRSaveExpoRawOnly");
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -11413,25 +11384,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, true, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Take photo in HDR mode with front camera.
-     *  Note that this fails on OnePlus 3T with old camera API, due to bug where photo resolution changes when
-     *  exposure compensation set for front camera.
+    /**
+     * Take photo in HDR mode with front camera.
+     * Note that this fails on OnePlus 3T with old camera API, due to bug where photo resolution changes when
+     * exposure compensation set for front camera.
      */
     public void testTakePhotoHDRFrontCamera() throws InterruptedException {
         Log.d(TAG, "testTakePhotoHDRFrontCamera");
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
@@ -11457,7 +11429,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(cameraId != new_cameraId);
 
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
@@ -11468,7 +11440,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -11481,7 +11453,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
@@ -11492,7 +11464,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        if( !mActivity.supportsHDR() ) {
+        if (!mActivity.supportsHDR()) {
             return;
         }
 
@@ -11505,20 +11477,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.HDR);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Tests expo bracketing with default values.
+    /**
+     * Tests expo bracketing with default values.
      */
     public void testTakePhotoExpo() throws InterruptedException {
         Log.d(TAG, "testTakePhotoExpo");
 
         setToDefault();
 
-        if( !mActivity.supportsExpoBracketing() ) {
+        if (!mActivity.supportsExpoBracketing()) {
             return;
         }
 
@@ -11530,20 +11503,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.ExpoBracketing);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
     }
 
-    /** Tests expo bracketing with 5 images, 1 stop.
+    /**
+     * Tests expo bracketing with 5 images, 1 stop.
      */
     public void testTakePhotoExpo5() throws InterruptedException {
         Log.d(TAG, "testTakePhotoExpo5");
 
         setToDefault();
 
-        if( !mActivity.supportsExpoBracketing() ) {
+        if (!mActivity.supportsExpoBracketing()) {
             return;
         }
 
@@ -11557,7 +11531,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.ExpoBracketing);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
@@ -11571,7 +11545,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.FocusBracketing);
         assertEquals(focusSeekBar.getVisibility(), View.VISIBLE);
-        focusSeekBar.setProgress( (int)(0.9*(focusSeekBar.getMax()-1)) );
+        focusSeekBar.setProgress((int) (0.9 * (focusSeekBar.getMax() - 1)));
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "source focus_distance: " + mPreview.getCameraController().getFocusDistance());
         mPreview.stoppedSettingFocusDistance(false); // hack, since onStopTrackingTouch() isn't called programmatically!
@@ -11580,7 +11554,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
@@ -11588,7 +11562,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, actual_initial_focus_distance, 1.0e-5f);
 
         assertEquals(focusTargetSeekBar.getVisibility(), View.VISIBLE);
-        focusTargetSeekBar.setProgress( (int)(0.25*(focusTargetSeekBar.getMax()-1)) );
+        focusTargetSeekBar.setProgress((int) (0.25 * (focusTargetSeekBar.getMax() - 1)));
         this.getInstrumentation().waitForIdleSync();
         // test that we temporarily set the focus to the target distance
         float target_actual_focus_distance = previewBuilder.get(CaptureRequest.LENS_FOCUS_DISTANCE);
@@ -11608,14 +11582,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, new_actual_focus_distance, 1.0e-5f);
     }
 
-    /** Tests taking a photo in focus bracketing mode.
+    /**
+     * Tests taking a photo in focus bracketing mode.
      */
     public void testTakePhotoFocusBracketing() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFocusBracketing");
 
         setToDefault();
 
-        if( !mActivity.supportsFocusBracketing() ) {
+        if (!mActivity.supportsFocusBracketing()) {
             return;
         }
 
@@ -11634,7 +11609,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
@@ -11654,14 +11629,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, new_actual_focus_distance, 1.0e-5f);
     }
 
-    /** Tests taking a photo in focus bracketing mode, with auto-level and 20 images.
+    /**
+     * Tests taking a photo in focus bracketing mode, with auto-level and 20 images.
      */
     public void testTakePhotoFocusBracketingHeavy() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFocusBracketingHeavy");
 
         setToDefault();
 
-        if( !mActivity.supportsFocusBracketing() ) {
+        if (!mActivity.supportsFocusBracketing()) {
             return;
         }
 
@@ -11686,7 +11662,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
@@ -11706,14 +11682,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, new_actual_focus_distance, 1.0e-5f);
     }
 
-    /** Tests taking a photo in focus bracketing mode, but with cancelling.
+    /**
+     * Tests taking a photo in focus bracketing mode, but with cancelling.
      */
     public void testTakePhotoFocusBracketingCancel() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFocusBracketingCancel");
 
         setToDefault();
 
-        if( !mActivity.supportsFocusBracketing() ) {
+        if (!mActivity.supportsFocusBracketing()) {
             return;
         }
 
@@ -11733,25 +11710,25 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
         float actual_initial_focus_distance = previewBuilder.get(CaptureRequest.LENS_FOCUS_DISTANCE);
         assertEquals(initial_focus_distance, actual_initial_focus_distance, 1.0e-5f);
 
-        assertFalse( mPreview.isTakingPhoto() );
-        assertTrue( mActivity.getApplicationInterface().canTakeNewPhoto() );
+        assertFalse(mPreview.isTakingPhoto());
+        assertTrue(mActivity.getApplicationInterface().canTakeNewPhoto());
 
-        for(int i=0;i<2;i++) {
+        for (int i = 0; i < 2; i++) {
             View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
             Log.d(TAG, "about to click take photo");
             clickView(takePhotoButton);
             Log.d(TAG, "done clicking take photo");
-            assertTrue( mPreview.isTakingPhoto() );
+            assertTrue(mPreview.isTakingPhoto());
 
-            Thread.sleep(i==0 ? 500 : 3000); // wait before cancelling
-            assertTrue( mPreview.isTakingPhoto() );
+            Thread.sleep(i == 0 ? 500 : 3000); // wait before cancelling
+            assertTrue(mPreview.isTakingPhoto());
 
             Log.d(TAG, "about to click take photo to cancel");
             clickView(takePhotoButton);
@@ -11759,8 +11736,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             // need to wait until cancelled
             Thread.sleep(3000);
-            assertFalse( mPreview.isTakingPhoto() );
-            assertTrue( mActivity.getApplicationInterface().canTakeNewPhoto() );
+            assertFalse(mPreview.isTakingPhoto());
+            assertTrue(mActivity.getApplicationInterface().canTakeNewPhoto());
 
             assertTrue(mPreview.isPreviewStarted()); // check preview restarted
             Log.d(TAG, "count_cameraTakePicture: " + mPreview.count_cameraTakePicture);
@@ -11778,17 +11755,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    /** Tests taking a photo with RAW and focus bracketing mode.
+    /**
+     * Tests taking a photo with RAW and focus bracketing mode.
      */
     public void testTakePhotoRawFocusBracketing() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawFocusBracketing");
 
         setToDefault();
 
-        if( !mActivity.supportsFocusBracketing() ) {
+        if (!mActivity.supportsFocusBracketing()) {
             return;
         }
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -11808,7 +11786,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
@@ -11828,17 +11806,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, new_actual_focus_distance, 1.0e-5f);
     }
 
-    /** Tests taking a photo with RAW only and focus bracketing mode.
+    /**
+     * Tests taking a photo with RAW only and focus bracketing mode.
      */
     public void testTakePhotoRawOnlyFocusBracketing() throws InterruptedException {
         Log.d(TAG, "testTakePhotoRawOnlyFocusBracketing");
 
         setToDefault();
 
-        if( !mActivity.supportsFocusBracketing() ) {
+        if (!mActivity.supportsFocusBracketing()) {
             return;
         }
-        if( !mPreview.supportsRaw() ) {
+        if (!mPreview.supportsRaw()) {
             return;
         }
 
@@ -11858,7 +11837,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         float initial_focus_distance = mPreview.getCameraController().getFocusDistance();
         Log.d(TAG, "initial_focus_distance: " + initial_focus_distance);
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         CaptureRequest.Builder previewBuilder = camera_controller2.testGetPreviewBuilder();
         // need to use LENS_FOCUS_DISTANCE rather than mPreview.getCameraController().getFocusDistance(), as the latter
         // will always return the source focus distance, even if the preview was set to something else
@@ -11878,14 +11857,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(initial_focus_distance, new_actual_focus_distance, 1.0e-5f);
     }
 
-    /** Tests NR photo mode.
+    /**
+     * Tests NR photo mode.
      */
     public void testTakePhotoNR() throws InterruptedException {
         Log.d(TAG, "testTakePhotoNR");
 
         setToDefault();
 
-        if( !mActivity.supportsNoiseReduction() ) {
+        if (!mActivity.supportsNoiseReduction()) {
             return;
         }
 
@@ -11904,7 +11884,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mActivity.getPreview().getCameraController().getBurstTotal() < CameraController.N_IMAGES_NR_DARK_LOW_LIGHT);
 
         // then try again without waiting
-        for(int i=1;i<n_back_photos;i++) {
+        for (int i = 1; i < n_back_photos; i++) {
             subTestTakePhoto(false, false, true, false, false, false, false, false);
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(mPreview.getCameraController().test_capture_results, i + 1);
@@ -11918,7 +11898,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, true, true, false, false, false, false);
         Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
         assertEquals(mPreview.getCameraController().test_capture_results, n_back_photos + 1);
-        if( mActivity.getPreview().getCameraController().captureResultHasIso() && mActivity.getPreview().getCameraController().captureResultIso() >= CameraController.ISO_FOR_DARK )
+        if (mActivity.getPreview().getCameraController().captureResultHasIso() && mActivity.getPreview().getCameraController().captureResultIso() >= CameraController.ISO_FOR_DARK)
             assertEquals(CameraController.N_IMAGES_NR_DARK_LOW_LIGHT, mActivity.getPreview().getCameraController().getBurstTotal());
         // reset
         mActivity.getApplicationInterface().setNRMode("preference_nr_mode_normal");
@@ -11926,7 +11906,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // then try front camera
 
-        if( mPreview.getCameraControllerManager().getNumberOfCameras() <= 1 ) {
+        if (mPreview.getCameraControllerManager().getNumberOfCameras() <= 1) {
             return;
         }
 
@@ -11949,14 +11929,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(mActivity.getPreview().getCameraController().getBurstTotal() < CameraController.N_IMAGES_NR_DARK_LOW_LIGHT);
     }
 
-    /** Tests fast burst with 20 images.
+    /**
+     * Tests fast burst with 20 images.
      */
     public void testTakePhotoFastBurst() throws InterruptedException {
         Log.d(TAG, "testTakePhotoFastBurst");
 
         setToDefault();
 
-        if( !mActivity.supportsFastBurst() ) {
+        if (!mActivity.supportsFastBurst()) {
             return;
         }
 
@@ -11969,7 +11950,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         assertSame(mActivity.getApplicationInterface().getPhotoMode(), MyApplicationInterface.PhotoMode.FastBurst);
         subTestTakePhoto(false, false, true, true, false, false, false, false);
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
@@ -12002,7 +11983,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         waitForTakePhoto();
 
-        if( mPreview.usingCamera2API() ) {
+        if (mPreview.usingCamera2API()) {
             Log.d(TAG, "test_capture_results: " + mPreview.getCameraController().test_capture_results);
             assertEquals(1, mPreview.getCameraController().test_capture_results);
         }
@@ -12011,11 +11992,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
-        if( is_slow ) {
+        if (is_slow) {
             // with limited queue, won't be able to save as many files
             assertTrue(n_new_files >= 3 && n_new_files <= 31);
-        }
-        else {
+        } else {
             // at one photo per 100ms, should have approximately 30 - note that long press can take longer to kick in on some devices, e.g., OnePlus 3T
             assertTrue(n_new_files >= 12 && n_new_files <= 31);
         }
@@ -12023,16 +12003,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         mActivity.waitUntilImageQueueEmpty();
     }
 
-    /** Tests continuous burst.
-     *  Fails on Android emulator with Camera2 API, due to a serious camera error occurring for
-     *  fast burst with more than 5 images!
+    /**
+     * Tests continuous burst.
+     * Fails on Android emulator with Camera2 API, due to a serious camera error occurring for
+     * fast burst with more than 5 images!
      */
     public void testTakePhotoContinuousBurst() throws InterruptedException {
         Log.d(TAG, "testTakePhotoContinuousBurst");
 
         setToDefault();
 
-        if( !mActivity.supportsFastBurst() ) {
+        if (!mActivity.supportsFastBurst()) {
             return;
         }
 
@@ -12044,16 +12025,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhoto(false, false, false, false, false, false, false, false);
     }
 
-    /** Tests continuous burst, but with flags set for slow saving and shorter queue.
-     *  Fails on Android emulator with Camera2 API, due to a serious camera error occurring for
-     *  fast burst with more than 5 images!
+    /**
+     * Tests continuous burst, but with flags set for slow saving and shorter queue.
+     * Fails on Android emulator with Camera2 API, due to a serious camera error occurring for
+     * fast burst with more than 5 images!
      */
     public void testTakePhotoContinuousBurstSlow() throws InterruptedException {
         Log.d(TAG, "testTakePhotoContinuousBurstSlow");
 
         setToDefault();
 
-        if( !mActivity.supportsFastBurst() ) {
+        if (!mActivity.supportsFastBurst()) {
             return;
         }
 
@@ -12069,7 +12051,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "subTestTakePhotoPanorama");
         setToDefault();
 
-        if( !mActivity.supportsPanorama() ) {
+        if (!mActivity.supportsPanorama()) {
             return;
         }
 
@@ -12089,7 +12071,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Thread.sleep(1000);
         assertEquals(0, mPreview.count_cameraTakePicture);
 
-        assertFalse( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+        assertFalse(mActivity.getApplicationInterface().getGyroSensor().isRecording());
 
         View takePhotoButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.take_photo);
         View switchCameraButton = mActivity.findViewById(net.sourceforge.opencamera.R.id.switch_camera);
@@ -12128,9 +12110,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Log.d(TAG, "after idle sync");
         assertEquals(1, mPreview.count_cameraTakePicture);
 
-        for(int i=0;i<(to_max ? MyApplicationInterface.max_panorama_pics_c-1 : 4);i++) {
+        for (int i = 0; i < (to_max ? MyApplicationInterface.max_panorama_pics_c - 1 : 4); i++) {
             Log.d(TAG, "i = " + i);
-            assertTrue( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+            assertTrue(mActivity.getApplicationInterface().getGyroSensor().isRecording());
 
             assertEquals(takePhotoButton.getVisibility(), View.VISIBLE);
             assertEquals(switchCameraButton.getVisibility(), View.GONE);
@@ -12147,7 +12129,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             Thread.sleep(2000);
 
-            assertTrue( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+            assertTrue(mActivity.getApplicationInterface().getGyroSensor().isRecording());
             mActivity.getApplicationInterface().getGyroSensor().testForceTargetAchieved(0);
             Log.d(TAG, "wait for taking photo");
             waitForTakePhoto();
@@ -12159,24 +12141,22 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Thread.sleep(2000);
 
-        if( !to_max ) {
-            assertTrue( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+        if (!to_max) {
+            assertTrue(mActivity.getApplicationInterface().getGyroSensor().isRecording());
 
-            if( cancel ) {
-                if( cancel_by_settings ) {
+            if (cancel) {
+                if (cancel_by_settings) {
                     Log.d(TAG, "about to click settings");
                     clickView(settingsButton);
                     Log.d(TAG, "done clicking settings");
                     this.getInstrumentation().waitForIdleSync();
-                }
-                else {
+                } else {
                     Log.d(TAG, "about to click cancel");
                     clickView(cancelPanoramaButton);
                     Log.d(TAG, "done clicking cancel");
                     this.getInstrumentation().waitForIdleSync();
                 }
-            }
-            else {
+            } else {
                 // finish panorama (if to_max, this should have happened automatically)
                 Log.d(TAG, "about to click take photo");
                 clickView(takePhotoButton);
@@ -12186,7 +12166,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             }
         }
 
-        assertFalse( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+        assertFalse(mActivity.getApplicationInterface().getGyroSensor().isRecording());
 
         assertEquals(takePhotoButton.getVisibility(), View.VISIBLE);
         assertEquals(switchCameraButton.getVisibility(), (mPreview.getCameraControllerManager().getNumberOfCameras() > 1 ? View.VISIBLE : View.GONE));
@@ -12201,26 +12181,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertEquals(settingsButton.getVisibility(), View.VISIBLE);
         assertEquals(cancelPanoramaButton.getVisibility(), View.GONE);
 
-        if( !cancel && !to_max ) {
+        if (!cancel && !to_max) {
             // test trying to take another photo whilst saving
             Thread.sleep(500);
-            assertTrue( mActivity.getApplicationInterface().getImageSaver().getNImagesToSave() > 0 );
+            assertTrue(mActivity.getApplicationInterface().getImageSaver().getNImagesToSave() > 0);
             Log.d(TAG, "about to click take photo whilst saving images");
             clickView(takePhotoButton);
             Log.d(TAG, "done clicking take photo");
             this.getInstrumentation().waitForIdleSync();
             Log.d(TAG, "after idle sync");
-            assertFalse( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+            assertFalse(mActivity.getApplicationInterface().getGyroSensor().isRecording());
 
             // and again (test for crash that occured in 1.47!)
             Thread.sleep(500);
-            assertTrue( mActivity.getApplicationInterface().getImageSaver().getNImagesToSave() > 0 );
+            assertTrue(mActivity.getApplicationInterface().getImageSaver().getNImagesToSave() > 0);
             Log.d(TAG, "about to click take photo whilst saving images");
             clickView(takePhotoButton);
             Log.d(TAG, "done clicking take photo");
             this.getInstrumentation().waitForIdleSync();
             Log.d(TAG, "after idle sync");
-            assertFalse( mActivity.getApplicationInterface().getGyroSensor().isRecording() );
+            assertFalse(mActivity.getApplicationInterface().getGyroSensor().isRecording());
         }
 
         mActivity.waitUntilImageQueueEmpty();
@@ -12250,6 +12230,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPanorama(true, false, false);
     }
 
+    /*private Bitmap getBitmapFromAssets(String filename) throws IOException {
+        Log.d(TAG, "getBitmapFromAssets: " + filename);
+        AssetManager assetManager = getInstrumentation().getContext().getResources().getAssets();
+        InputStream is = assetManager.open(filename);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+        Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
+        is.close();
+        Log.d(TAG, "    done: " + bitmap);
+        return bitmap;
+    }*/
+
     /* Test for panorama photo mode, but cancelling.
      */
     public void testTakePhotoPanoramaCancel() throws InterruptedException {
@@ -12266,18 +12258,6 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestTakePhotoPanorama(false, true, true);
     }
 
-    /*private Bitmap getBitmapFromAssets(String filename) throws IOException {
-        Log.d(TAG, "getBitmapFromAssets: " + filename);
-        AssetManager assetManager = getInstrumentation().getContext().getResources().getAssets();
-        InputStream is = assetManager.open(filename);
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inMutable = true;
-        Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
-        is.close();
-        Log.d(TAG, "    done: " + bitmap);
-        return bitmap;
-    }*/
-
     private Bitmap getBitmapFromFile(String filename) throws FileNotFoundException {
         return getBitmapFromFile(filename, 1);
     }
@@ -12287,14 +12267,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
         //options.inSampleSize = inSampleSize;
-        if( inSampleSize > 1 ) {
+        if (inSampleSize > 1) {
             // use inDensity for better quality, as inSampleSize uses nearest neighbour
             // see same code in ImageSaver.setBitmapOptionsSampleSize()
             options.inDensity = inSampleSize;
             options.inTargetDensity = 1;
         }
         Bitmap bitmap = BitmapFactory.decodeFile(filename, options);
-        if( bitmap == null )
+        if (bitmap == null)
             throw new FileNotFoundException();
         Log.d(TAG, "    done: " + bitmap);
 
@@ -12302,46 +12282,41 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // which getBitmap() doesn't account for
         try {
             ExifInterface exif = new ExifInterface(filename);
-            if( exif != null ) {
+            if (exif != null) {
                 int exif_orientation_s = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
                 boolean needs_tf = false;
                 int exif_orientation = 0;
                 // from http://jpegclub.org/exif_orientation.html
                 // and http://stackoverflow.com/questions/20478765/how-to-get-the-correct-orientation-of-the-image-selected-from-the-default-image
-                if( exif_orientation_s == ExifInterface.ORIENTATION_UNDEFINED || exif_orientation_s == ExifInterface.ORIENTATION_NORMAL ) {
+                if (exif_orientation_s == ExifInterface.ORIENTATION_UNDEFINED || exif_orientation_s == ExifInterface.ORIENTATION_NORMAL) {
                     // leave unchanged
-                }
-                else if( exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_180 ) {
+                } else if (exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_180) {
                     needs_tf = true;
                     exif_orientation = 180;
-                }
-                else if( exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_90 ) {
+                } else if (exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_90) {
                     needs_tf = true;
                     exif_orientation = 90;
-                }
-                else if( exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_270 ) {
+                } else if (exif_orientation_s == ExifInterface.ORIENTATION_ROTATE_270) {
                     needs_tf = true;
                     exif_orientation = 270;
-                }
-                else {
+                } else {
                     // just leave unchanged for now
                     Log.e(TAG, "    unsupported exif orientation: " + exif_orientation_s);
                 }
                 Log.d(TAG, "    exif orientation: " + exif_orientation);
 
-                if( needs_tf ) {
+                if (needs_tf) {
                     Log.d(TAG, "    need to rotate bitmap due to exif orientation tag");
                     Matrix m = new Matrix();
                     m.setRotate(exif_orientation, bitmap.getWidth() * 0.5f, bitmap.getHeight() * 0.5f);
-                    Bitmap rotated_bitmap = Bitmap.createBitmap(bitmap, 0, 0,bitmap.getWidth(), bitmap.getHeight(), m, true);
-                    if( rotated_bitmap != bitmap ) {
+                    Bitmap rotated_bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
+                    if (rotated_bitmap != bitmap) {
                         bitmap.recycle();
                         bitmap = rotated_bitmap;
                     }
                 }
             }
-        }
-        catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         /*{
@@ -12362,7 +12337,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         setToDefault();
 
         final int n_restarts = 150;
-        for(int i=0;i<n_restarts;i++) {
+        for (int i = 0; i < n_restarts; i++) {
             Log.d(TAG, "restart: " + i + " / " + n_restarts);
             restart();
         }
@@ -12408,12 +12383,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         List<String> video_quality = mActivity.getPreview().getVideoQualityHander().getSupportedVideoQuality();
 
-        assertFalse( mActivity.getApplicationInterface().isVideoPref() );
-        assertEquals( 0, mActivity.getApplicationInterface().getVideoMaxDurationPref() );
+        assertFalse(mActivity.getApplicationInterface().isVideoPref());
+        assertEquals(0, mActivity.getApplicationInterface().getVideoMaxDurationPref());
         // n.b., will fail if not enough storage space on device!:
         MyApplicationInterface.VideoMaxFileSize videomaxfilesize = mActivity.getApplicationInterface().getVideoMaxFileSizePref();
         long max_filesize = videomaxfilesize.max_filesize;
-        assertTrue( max_filesize > 100000000);
+        assertTrue(max_filesize > 100000000);
         assertTrue(videomaxfilesize.auto_restart);
 
         Intent intent = createDefaultIntent();
@@ -12424,12 +12399,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         restart();
 
-        assertTrue( mActivity.getApplicationInterface().isVideoPref() );
-        assertEquals( 0, mActivity.getApplicationInterface().getVideoMaxDurationPref() );
+        assertTrue(mActivity.getApplicationInterface().isVideoPref());
+        assertEquals(0, mActivity.getApplicationInterface().getVideoMaxDurationPref());
         videomaxfilesize = mActivity.getApplicationInterface().getVideoMaxFileSizePref();
-        assertEquals( 50123456, videomaxfilesize.max_filesize );
+        assertEquals(50123456, videomaxfilesize.max_filesize);
         assertFalse(videomaxfilesize.auto_restart);
-        assertEquals(video_quality.get(video_quality.size()-1), mActivity.getApplicationInterface().getVideoQualityPref());
+        assertEquals(video_quality.get(video_quality.size() - 1), mActivity.getApplicationInterface().getVideoQualityPref());
 
         intent = createDefaultIntent();
         intent.setAction(MediaStore.ACTION_VIDEO_CAPTURE);
@@ -12438,11 +12413,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         restart();
 
-        assertTrue( mActivity.getApplicationInterface().isVideoPref() );
-        assertEquals( 0, mActivity.getApplicationInterface().getVideoMaxDurationPref() );
+        assertTrue(mActivity.getApplicationInterface().isVideoPref());
+        assertEquals(0, mActivity.getApplicationInterface().getVideoMaxDurationPref());
         videomaxfilesize = mActivity.getApplicationInterface().getVideoMaxFileSizePref();
-        assertTrue( videomaxfilesize.max_filesize > 100000000);
-        assertTrue( Math.abs(max_filesize - videomaxfilesize.max_filesize) < 5000000 ); // remaining storage may vary whilst test is running!
+        assertTrue(videomaxfilesize.max_filesize > 100000000);
+        assertTrue(Math.abs(max_filesize - videomaxfilesize.max_filesize) < 5000000); // remaining storage may vary whilst test is running!
         assertTrue(videomaxfilesize.auto_restart);
 
         assertEquals(video_quality.get(0), mActivity.getApplicationInterface().getVideoQualityPref());
@@ -12458,12 +12433,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         setToDefault();
 
-        assertFalse( mActivity.getApplicationInterface().isVideoPref() );
-        assertEquals( 0, mActivity.getApplicationInterface().getVideoMaxDurationPref() );
+        assertFalse(mActivity.getApplicationInterface().isVideoPref());
+        assertEquals(0, mActivity.getApplicationInterface().getVideoMaxDurationPref());
         // n.b., will fail if not enough storage space on device!:
         MyApplicationInterface.VideoMaxFileSize videomaxfilesize = mActivity.getApplicationInterface().getVideoMaxFileSizePref();
         long max_filesize = videomaxfilesize.max_filesize;
-        assertTrue( max_filesize > 100000000);
+        assertTrue(max_filesize > 100000000);
         assertTrue(videomaxfilesize.auto_restart);
 
         Intent intent = createDefaultIntent();
@@ -12473,10 +12448,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         restart();
 
-        assertTrue( mActivity.getApplicationInterface().isVideoPref() );
-        assertEquals( 5000, mActivity.getApplicationInterface().getVideoMaxDurationPref() );
+        assertTrue(mActivity.getApplicationInterface().isVideoPref());
+        assertEquals(5000, mActivity.getApplicationInterface().getVideoMaxDurationPref());
         // note that max_filesize may vary if device filesize has changed whilst test is running
-        assertEquals( max_filesize, mActivity.getApplicationInterface().getVideoMaxFileSizePref().max_filesize, 5*1048576 );
+        assertEquals(max_filesize, mActivity.getApplicationInterface().getVideoMaxFileSizePref().max_filesize, 5 * 1048576);
 
         // count initial files in folder
         int n_files = getNFiles();
@@ -12489,11 +12464,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         this.getInstrumentation().waitForIdleSync();
         Log.d(TAG, "after idle sync");
 
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         Thread.sleep(4000);
         Log.d(TAG, "check still taking video");
-        assertTrue( mPreview.isVideoRecording() );
+        assertTrue(mPreview.isVideoRecording());
 
         int n_new_files = getNFiles() - n_files;
         Log.d(TAG, "n_new_files: " + n_new_files);
@@ -12511,8 +12486,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     }
 
-    /** Tests that we handle the upgrade from the preference boolean key "preference_use_camera2"
-     *  to the string key PreferenceKeys.CameraAPIPreferenceKey that occured in v1.48.
+    /**
+     * Tests that we handle the upgrade from the preference boolean key "preference_use_camera2"
+     * to the string key PreferenceKeys.CameraAPIPreferenceKey that occured in v1.48.
      */
     public void testCamera2PrefUpgrade() {
         Log.d(TAG, "testCamera2PrefUpgrade");
@@ -12520,7 +12496,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // n.b., don't bother calling setToDefault()
         waitUntilCameraOpened();
 
-        if( !mActivity.supportsCamera2() ) {
+        if (!mActivity.supportsCamera2()) {
             Log.d(TAG, "test requires camera2 support");
             return;
         }
@@ -12543,7 +12519,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         editor.putBoolean("preference_use_camera2", true);
         editor.apply();
 
-        for(int i=0;i<2;i++) {
+        for (int i = 0; i < 2; i++) {
             restart();
             assertTrue(mPreview.usingCamera2API());
 
@@ -12555,28 +12531,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         }
     }
 
-    private static class HistogramDetails {
-        final int min_value;
-        final int median_value;
-        final int max_value;
-
-        HistogramDetails(int min_value, int median_value, int max_value) {
-            this.min_value = min_value;
-            this.median_value = median_value;
-            this.max_value = max_value;
-        }
-    }
-
-    /** Checks for the resultant histogram.
-     *  We check that we have a single range of non-zero values.
+    /**
+     * Checks for the resultant histogram.
+     * We check that we have a single range of non-zero values.
+     *
      * @param bitmap The bitmap to compute and check a histogram for.
      */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private HistogramDetails checkHistogram(Bitmap bitmap) {
-        int [] histogram = mActivity.getApplicationInterface().getHDRProcessor().computeHistogram(bitmap, true);
+        int[] histogram = mActivity.getApplicationInterface().getHDRProcessor().computeHistogram(bitmap, true);
         assertEquals(256, histogram.length);
         int total = 0;
-        for(int i=0;i<histogram.length;i++) {
+        for (int i = 0; i < histogram.length; i++) {
             Log.d(TAG, "histogram[" + i + "]: " + histogram[i]);
             total += histogram[i];
         }
@@ -12584,18 +12550,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         boolean started = false;
         int min_value = -1, median_value = -1, max_value = -1;
         int count = 0;
-        int middle = total/2;
-        for(int i=0;i<histogram.length;i++) {
+        int middle = total / 2;
+        for (int i = 0; i < histogram.length; i++) {
             int value = histogram[i];
-            if( !started ) {
+            if (!started) {
                 started = value != 0;
             }
-            if( value != 0 ) {
-                if( min_value == -1 )
+            if (value != 0) {
+                if (min_value == -1)
                     min_value = i;
                 max_value = i;
                 count += value;
-                if( count >= middle && median_value == -1 )
+                if (count >= middle && median_value == -1)
                     median_value = i;
             }
         }
@@ -12609,19 +12575,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         return subTestHDR(inputs, output_name, test_dro, iso, exposure_time, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_REINHARD);
     }
 
-    /** The following testHDRX tests test the HDR algorithm on a given set of input images.
-     *  By testing on a fixed sample, this makes it easier to finetune the HDR algorithm for quality and performance.
-     *  To use these tests, the testdata/ subfolder should be manually copied to the test device in the DCIM/testOpenCamera/
-     *  folder (so you have DCIM/testOpenCamera/testdata/). We don't use assets/ as we'd end up with huge APK sizes which takes
-     *  time to transfer to the device everytime we run the tests.
-     * @param iso The ISO of the middle image (for testing Open Camera's "smart" contrast enhancement). If set to -1, then use "always" contrast enhancement.
+    /**
+     * The following testHDRX tests test the HDR algorithm on a given set of input images.
+     * By testing on a fixed sample, this makes it easier to finetune the HDR algorithm for quality and performance.
+     * To use these tests, the testdata/ subfolder should be manually copied to the test device in the DCIM/testOpenCamera/
+     * folder (so you have DCIM/testOpenCamera/testdata/). We don't use assets/ as we'd end up with huge APK sizes which takes
+     * time to transfer to the device everytime we run the tests.
+     *
+     * @param iso           The ISO of the middle image (for testing Open Camera's "smart" contrast enhancement). If set to -1, then use "always" contrast enhancement.
      * @param exposure_time The exposure time of the middle image (for testing Open Camera's "smart" contrast enhancement)
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private HistogramDetails subTestHDR(List<Bitmap> inputs, String output_name, boolean test_dro, int iso, long exposure_time, HDRProcessor.TonemappingAlgorithm tonemapping_algorithm) throws IOException, InterruptedException {
         Log.d(TAG, "subTestHDR");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "renderscript requires Android Lollipop or better");
             return null;
         }
@@ -12629,22 +12597,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         Thread.sleep(1000); // wait for camera to open
 
         Bitmap dro_bitmap_in = null;
-        if( test_dro ) {
+        if (test_dro) {
             // save copy of input bitmap to also test DRO (since the HDR routine will free the inputs)
-            int mid = (inputs.size()-1)/2;
+            int mid = (inputs.size() - 1) / 2;
             dro_bitmap_in = inputs.get(mid);
             dro_bitmap_in = dro_bitmap_in.copy(dro_bitmap_in.getConfig(), true);
         }
 
         HistogramDetails hdrHistogramDetails = null;
-        if( inputs.size() > 1 ) {
-            String preference_hdr_contrast_enhancement = (iso==-1) ? "preference_hdr_contrast_enhancement_always" : "preference_hdr_contrast_enhancement_smart";
-    		float hdr_alpha = ImageSaver.getHDRAlpha(preference_hdr_contrast_enhancement, exposure_time, inputs.size());
+        if (inputs.size() > 1) {
+            String preference_hdr_contrast_enhancement = (iso == -1) ? "preference_hdr_contrast_enhancement_always" : "preference_hdr_contrast_enhancement_smart";
+            float hdr_alpha = ImageSaver.getHDRAlpha(preference_hdr_contrast_enhancement, exposure_time, inputs.size());
             long time_s = System.currentTimeMillis();
             try {
                 mActivity.getApplicationInterface().getHDRProcessor().processHDR(inputs, true, null, true, null, hdr_alpha, 4, true, tonemapping_algorithm, HDRProcessor.DROTonemappingAlgorithm.DROALGORITHM_GAINGAMMA);
-            }
-            catch(HDRProcessorException e) {
+            } catch (HDRProcessorException e) {
                 e.printStackTrace();
                 throw new RuntimeException();
             }
@@ -12656,13 +12623,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.get(0).recycle();
         inputs.clear();
 
-        if( test_dro ) {
+        if (test_dro) {
             inputs.add(dro_bitmap_in);
             long time_s = System.currentTimeMillis();
             try {
                 mActivity.getApplicationInterface().getHDRProcessor().processHDR(inputs, true, null, true, null, 0.5f, 4, true, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_REINHARD, HDRProcessor.DROTonemappingAlgorithm.DROALGORITHM_GAINGAMMA);
-            }
-            catch(HDRProcessorException e) {
+            } catch (HDRProcessorException e) {
                 e.printStackTrace();
                 throw new RuntimeException();
             }
@@ -12678,20 +12644,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         return hdrHistogramDetails;
     }
 
-    private void checkHDROffsets(int [] exp_offsets_x, int [] exp_offsets_y) {
+    private void checkHDROffsets(int[] exp_offsets_x, int[] exp_offsets_y) {
         checkHDROffsets(exp_offsets_x, exp_offsets_y, 1);
     }
 
-    /** Checks that the HDR offsets used for auto-alignment are as expected.
+    /**
+     * Checks that the HDR offsets used for auto-alignment are as expected.
      */
-    private void checkHDROffsets(int [] exp_offsets_x, int [] exp_offsets_y, int scale) {
-        int [] offsets_x = mActivity.getApplicationInterface().getHDRProcessor().offsets_x;
-        int [] offsets_y = mActivity.getApplicationInterface().getHDRProcessor().offsets_y;
-        for(int i=0;i<offsets_x.length;i++) {
-            Log.d(TAG, "offsets " + i + " ( " + offsets_x[i]*scale + " , " + offsets_y[i]*scale + " ), expected ( " + exp_offsets_x[i] + " , " + exp_offsets_y[i] + " )");
+    private void checkHDROffsets(int[] exp_offsets_x, int[] exp_offsets_y, int scale) {
+        int[] offsets_x = mActivity.getApplicationInterface().getHDRProcessor().offsets_x;
+        int[] offsets_y = mActivity.getApplicationInterface().getHDRProcessor().offsets_y;
+        for (int i = 0; i < offsets_x.length; i++) {
+            Log.d(TAG, "offsets " + i + " ( " + offsets_x[i] * scale + " , " + offsets_y[i] * scale + " ), expected ( " + exp_offsets_x[i] + " , " + exp_offsets_y[i] + " )");
             // we allow some tolerance as different devices can produce different results (e.g., Nexus 6 vs OnePlus 3T; see testHDR5 on Nexus 6)
-            assertTrue(Math.abs(offsets_x[i]*scale - exp_offsets_x[i]) <= 1);
-            assertTrue(Math.abs(offsets_y[i]*scale - exp_offsets_y[i]) <= 1);
+            assertTrue(Math.abs(offsets_x[i] * scale - exp_offsets_x[i]) <= 1);
+            assertTrue(Math.abs(offsets_y[i] * scale - exp_offsets_y[i]) <= 1);
         }
     }
 
@@ -12706,12 +12673,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertTrue(Math.abs(exp_max_value - hdrHistogramDetails.max_value) <= 3);
     }
 
-    final private String hdr_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/hdrsamples/";
-    final private String avg_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/avgsamples/";
-    final private String logprofile_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/logprofilesamples/";
-    final private String panorama_images_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/testOpenCamera/testdata/panoramasamples/";
-
-    /** Tests HDR algorithm on test samples "saintpaul".
+    /**
+     * Tests HDR algorithm on test samples "saintpaul".
      */
     public void testHDR1() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR1");
@@ -12720,15 +12683,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input3.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input4.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input3.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input4.jpg"));
 
         // actual ISO unknown, so guessing
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR1_output.jpg", false, 1600, 1000000000L);
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
@@ -12737,7 +12700,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 1, 24, 254);
     }
 
-    /** Tests HDR algorithm on test samples "saintpaul", but with 5 images.
+    /**
+     * Tests HDR algorithm on test samples "saintpaul", but with 5 images.
      */
     public void testHDR1_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR1_exp5");
@@ -12746,60 +12710,62 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input3.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input4.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "saintpaul/input5.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input3.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input4.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "saintpaul/input5.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR1_exp5_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0, 0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 3, 43, 251);
         checkHistogramDetails(hdrHistogramDetails, 6, 42, 251);
     }
 
-    /** Tests HDR algorithm on test samples "stlouis".
+    /**
+     * Tests HDR algorithm on test samples "stlouis".
      */
     public void testHDR2() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR2");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "stlouis/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "stlouis/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "stlouis/input3.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "stlouis/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "stlouis/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "stlouis/input3.jpg"));
 
         // actual ISO unknown, so guessing
-        subTestHDR(inputs, "testHDR2_output.jpg", false, 1600, (long)(1000000000L*2.5));
+        subTestHDR(inputs, "testHDR2_output.jpg", false, 1600, (long) (1000000000L * 2.5));
 
-        int [] exp_offsets_x = {0, 0, 2};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 2};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR3".
+    /**
+     * Tests HDR algorithm on test samples "testHDR3".
      */
     public void testHDR3() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR3");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR3/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR3/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR3/input2.jpg") );
-        
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR3_output.jpg", false, 40, 1000000000L/680);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR3/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR3/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR3/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {1, 0, -1};
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR3_output.jpg", false, 40, 1000000000L / 680);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {1, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 3, 104, 255);
@@ -12807,167 +12773,175 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 8, 113, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR4".
+    /**
+     * Tests HDR algorithm on test samples "testHDR4".
      */
     public void testHDR4() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR4");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR4/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR4/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR4/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR4_output.jpg", true, 102, 1000000000L/60);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR4/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR4/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR4/input2.jpg"));
 
-        int [] exp_offsets_x = {-2, 0, 2};
-        int [] exp_offsets_y = {-1, 0, 1};
+        subTestHDR(inputs, "testHDR4_output.jpg", true, 102, 1000000000L / 60);
+
+        int[] exp_offsets_x = {-2, 0, 2};
+        int[] exp_offsets_y = {-1, 0, 1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR5".
+    /**
+     * Tests HDR algorithm on test samples "testHDR5".
      */
     public void testHDR5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR5");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR5/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR5/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR5/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR5_output.jpg", false, 40, 1000000000L/398);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR5/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR5/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR5/input2.jpg"));
+
+        subTestHDR(inputs, "testHDR5_output.jpg", false, 40, 1000000000L / 398);
 
         // Nexus 6:
         //int [] exp_offsets_x = {0, 0, 0};
         //int [] exp_offsets_y = {-1, 0, 0};
         // OnePlus 3T:
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR6".
+    /**
+     * Tests HDR algorithm on test samples "testHDR6".
      */
     public void testHDR6() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR6");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR6/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR6/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR6/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR6_output.jpg", false, 40, 1000000000L/2458);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR6/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR6/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR6/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {1, 0, -1};
+        subTestHDR(inputs, "testHDR6_output.jpg", false, 40, 1000000000L / 2458);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {1, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR7".
+    /**
+     * Tests HDR algorithm on test samples "testHDR7".
      */
     public void testHDR7() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR7");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR7/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR7/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR7/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR7_output.jpg", false, 40, 1000000000L/538);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR7/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR7/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR7/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 1};
+        subTestHDR(inputs, "testHDR7_output.jpg", false, 40, 1000000000L / 538);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR8".
+    /**
+     * Tests HDR algorithm on test samples "testHDR8".
      */
     public void testHDR8() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR8");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR8/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR8/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR8/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR8_output.jpg", false, 40, 1000000000L/148);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR8/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR8/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR8/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        subTestHDR(inputs, "testHDR8_output.jpg", false, 40, 1000000000L / 148);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR9".
+    /**
+     * Tests HDR algorithm on test samples "testHDR9".
      */
     public void testHDR9() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR9");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR9/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR9/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR9/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR9_output.jpg", false, 40, 1000000000L/1313);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR9/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR9/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR9/input2.jpg"));
 
-        int [] exp_offsets_x = {-1, 0, 1};
-        int [] exp_offsets_y = {0, 0, -1};
+        subTestHDR(inputs, "testHDR9_output.jpg", false, 40, 1000000000L / 1313);
+
+        int[] exp_offsets_x = {-1, 0, 1};
+        int[] exp_offsets_y = {0, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR10".
+    /**
+     * Tests HDR algorithm on test samples "testHDR10".
      */
     public void testHDR10() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR10");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR10/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR10/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR10/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR10_output.jpg", false, 107, 1000000000L/120);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR10/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR10/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR10/input2.jpg"));
 
-        int [] exp_offsets_x = {2, 0, 0};
-        int [] exp_offsets_y = {5, 0, 0};
+        subTestHDR(inputs, "testHDR10_output.jpg", false, 107, 1000000000L / 120);
+
+        int[] exp_offsets_x = {2, 0, 0};
+        int[] exp_offsets_y = {5, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR11".
+    /**
+     * Tests HDR algorithm on test samples "testHDR11".
      */
     public void testHDR11() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR11");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR11/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR11/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR11/input2.jpg") );
-        
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR11_output.jpg", true, 40, 1000000000L/2662);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR11/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR11/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR11/input2.jpg"));
 
-        int [] exp_offsets_x = {-2, 0, 1};
-        int [] exp_offsets_y = {1, 0, -1};
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR11_output.jpg", true, 40, 1000000000L / 2662);
+
+        int[] exp_offsets_x = {-2, 0, 1};
+        int[] exp_offsets_y = {1, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 48, 255);
@@ -12975,147 +12949,154 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 62, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR12".
+    /**
+     * Tests HDR algorithm on test samples "testHDR12".
      */
     public void testHDR12() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR12");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR12/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR12/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR12/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR12_output.jpg", true, 1196, 1000000000L/12);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR12/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR12/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR12/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 7};
-        int [] exp_offsets_y = {0, 0, 8};
+        subTestHDR(inputs, "testHDR12_output.jpg", true, 1196, 1000000000L / 12);
+
+        int[] exp_offsets_x = {0, 0, 7};
+        int[] exp_offsets_y = {0, 0, 8};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR13".
+    /**
+     * Tests HDR algorithm on test samples "testHDR13".
      */
     public void testHDR13() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR13");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR13/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR13/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR13/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR13_output.jpg", false, 323, 1000000000L/24);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR13/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR13/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR13/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 2};
-        int [] exp_offsets_y = {0, 0, -1};
+        subTestHDR(inputs, "testHDR13_output.jpg", false, 323, 1000000000L / 24);
+
+        int[] exp_offsets_x = {0, 0, 2};
+        int[] exp_offsets_y = {0, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR14".
+    /**
+     * Tests HDR algorithm on test samples "testHDR14".
      */
     public void testHDR14() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR14");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR14/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR14/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR14/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR14_output.jpg", false, 40, 1000000000L/1229);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR14/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR14/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR14/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 1};
-        int [] exp_offsets_y = {0, 0, -1};
+        subTestHDR(inputs, "testHDR14_output.jpg", false, 40, 1000000000L / 1229);
+
+        int[] exp_offsets_x = {0, 0, 1};
+        int[] exp_offsets_y = {0, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR15".
+    /**
+     * Tests HDR algorithm on test samples "testHDR15".
      */
     public void testHDR15() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR15");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR15/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR15/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR15/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR15_output.jpg", false, 40, 1000000000L/767);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR15/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR15/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR15/input2.jpg"));
 
-        int [] exp_offsets_x = {1, 0, -1};
-        int [] exp_offsets_y = {2, 0, -3};
+        subTestHDR(inputs, "testHDR15_output.jpg", false, 40, 1000000000L / 767);
+
+        int[] exp_offsets_x = {1, 0, -1};
+        int[] exp_offsets_y = {2, 0, -3};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR16".
+    /**
+     * Tests HDR algorithm on test samples "testHDR16".
      */
     public void testHDR16() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR16");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR16/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR16/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR16/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR16_output.jpg", false, 52, 1000000000L/120);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR16/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR16/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR16/input2.jpg"));
 
-        int [] exp_offsets_x = {-1, 0, 2};
-        int [] exp_offsets_y = {1, 0, -6};
+        subTestHDR(inputs, "testHDR16_output.jpg", false, 52, 1000000000L / 120);
+
+        int[] exp_offsets_x = {-1, 0, 2};
+        int[] exp_offsets_y = {1, 0, -6};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR17".
+    /**
+     * Tests HDR algorithm on test samples "testHDR17".
      */
     public void testHDR17() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR17");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR17/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR17/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR17/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR17_output.jpg", true, 557, 1000000000L/12);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR17/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR17/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR17/input2.jpg"));
+
+        subTestHDR(inputs, "testHDR17_output.jpg", true, 557, 1000000000L / 12);
 
         // Nexus 6:
         //int [] exp_offsets_x = {0, 0, -3};
         //int [] exp_offsets_y = {0, 0, -4};
         // OnePlus 3T:
-        int [] exp_offsets_x = {0, 0, -2};
-        int [] exp_offsets_y = {0, 0, -3};
+        int[] exp_offsets_x = {0, 0, -2};
+        int[] exp_offsets_y = {0, 0, -3};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR18".
+    /**
+     * Tests HDR algorithm on test samples "testHDR18".
      */
     public void testHDR18() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR18");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR18/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR18/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR18/input2.jpg") );
-        
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR18_output.jpg", true, 100, 1000000000L/800);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR18/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR18/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR18/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR18_output.jpg", true, 100, 1000000000L / 800);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 1, 113, 254);
@@ -13124,92 +13105,97 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 2, 120, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR19".
+    /**
+     * Tests HDR algorithm on test samples "testHDR19".
      */
     public void testHDR19() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR19");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR19/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR19/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR19/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR19_output.jpg", true, 100, 1000000000L/160);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR19/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR19/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR19/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        subTestHDR(inputs, "testHDR19_output.jpg", true, 100, 1000000000L / 160);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR20".
+    /**
+     * Tests HDR algorithm on test samples "testHDR20".
      */
     public void testHDR20() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR20");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR20/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR20/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR20/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR20_output.jpg", true, 100, 1000000000L*2);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR20/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR20/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR20/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {-1, 0, 0};
+        subTestHDR(inputs, "testHDR20_output.jpg", true, 100, 1000000000L * 2);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {-1, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR21".
+    /**
+     * Tests HDR algorithm on test samples "testHDR21".
      */
     public void testHDR21() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR21");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR21/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR21/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR21/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR21/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR21/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR21/input2.jpg"));
 
         // ISO and exposure unknown, so guessing
-        subTestHDR(inputs, "testHDR21_output.jpg", true, 800, 1000000000L/12);
+        subTestHDR(inputs, "testHDR21_output.jpg", true, 800, 1000000000L / 12);
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR22".
+    /**
+     * Tests HDR algorithm on test samples "testHDR22".
      */
     public void testHDR22() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR22");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR22/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR22/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR22/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR22_output.jpg", true, 391, 1000000000L/12);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR22/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR22/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR22/input2.jpg"));
+
+        subTestHDR(inputs, "testHDR22_output.jpg", true, 391, 1000000000L / 12);
 
         // Nexus 6:
         //int [] exp_offsets_x = {1, 0, -5};
         //int [] exp_offsets_y = {1, 0, -6};
         // OnePlus 3T:
-        int [] exp_offsets_x = {0, 0, -5};
-        int [] exp_offsets_y = {1, 0, -6};
+        int[] exp_offsets_x = {0, 0, -5};
+        int[] exp_offsets_y = {1, 0, -6};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 2 images.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 2 images.
      */
     public void testHDR23_exp2() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp2");
@@ -13218,20 +13204,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp2_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0};
-        int [] exp_offsets_y = {0, 0};
+        int[] exp_offsets_x = {0, 0};
+        int[] exp_offsets_y = {0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 13, 72, 250);
         checkHistogramDetails(hdrHistogramDetails, 24, 72, 250);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 2 images, and greater exposure gap.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 2 images, and greater exposure gap.
      */
     public void testHDR23_exp2b() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp2b");
@@ -13240,34 +13227,35 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp2b_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0};
-        int [] exp_offsets_y = {0, 0};
+        int[] exp_offsets_x = {0, 0};
+        int[] exp_offsets_y = {0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23".
+    /**
+     * Tests HDR algorithm on test samples "testHDR23".
      */
     public void testHDR23() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
 
         // ISO unknown, so guessing
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_output.jpg", false, 1600, 1000000000L);
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 17, 81, 255);
@@ -13275,7 +13263,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 29, 68, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 4 images.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 4 images.
      */
     public void testHDR23_exp4() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp4");
@@ -13284,22 +13273,23 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp4_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 15, 69, 254);
         checkHistogramDetails(hdrHistogramDetails, 24, 70, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 5 images.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 5 images.
      */
     public void testHDR23_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp5");
@@ -13308,16 +13298,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp5_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0, 0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 17, 81, 255);
@@ -13325,7 +13315,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 21, 74, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 6 images.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 6 images.
      */
     public void testHDR23_exp6() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp6");
@@ -13334,24 +13325,25 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0072.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0061.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0072.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0061.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp6_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0, 0, 0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0, 0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0, 0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0, 0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 15, 70, 254);
         checkHistogramDetails(hdrHistogramDetails, 25, 71, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR23", but with 7 images.
+    /**
+     * Tests HDR algorithm on test samples "testHDR23", but with 7 images.
      */
     public void testHDR23_exp7() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR23_exp7");
@@ -13360,18 +13352,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0072.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR23/memorial0061.png") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0072.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0070.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0068.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0066.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0064.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0062.png"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR23/memorial0061.png"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR23_exp7_output.jpg", false, -1, -1);
 
-        int [] exp_offsets_x = {0, 0, 0, 0, 0, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0, 0, 0, 0, 0};
+        int[] exp_offsets_x = {0, 0, 0, 0, 0, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0, 0, 0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 17, 81, 255);
@@ -13379,130 +13371,137 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 20, 72, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR24".
+    /**
+     * Tests HDR algorithm on test samples "testHDR24".
      */
     public void testHDR24() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR24");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR24/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR24/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR24/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR24_output.jpg", true, 40, 1000000000L/422);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR24/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR24/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR24/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 1};
-        int [] exp_offsets_y = {0, 0, 0};
+        subTestHDR(inputs, "testHDR24_output.jpg", true, 40, 1000000000L / 422);
+
+        int[] exp_offsets_x = {0, 0, 1};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR25".
+    /**
+     * Tests HDR algorithm on test samples "testHDR25".
      */
     public void testHDR25() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR25");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR25/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR25/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR25/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR25_output.jpg", true, 40, 1000000000L/1917);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR25/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR25/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR25/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 0};
-        int [] exp_offsets_y = {1, 0, -1};
+        subTestHDR(inputs, "testHDR25_output.jpg", true, 40, 1000000000L / 1917);
+
+        int[] exp_offsets_x = {0, 0, 0};
+        int[] exp_offsets_y = {1, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR26".
+    /**
+     * Tests HDR algorithm on test samples "testHDR26".
      */
     public void testHDR26() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR26");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR26/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR26/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR26/input2.jpg") );
-        
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR26_output.jpg", true, 40, 1000000000L/5325);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR26/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR26/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR26/input2.jpg"));
 
-        int [] exp_offsets_x = {-1, 0, 1};
-        int [] exp_offsets_y = {1, 0, -1};
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR26_output.jpg", true, 40, 1000000000L / 5325);
+
+        int[] exp_offsets_x = {-1, 0, 1};
+        int[] exp_offsets_y = {1, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 104, 254);
         checkHistogramDetails(hdrHistogramDetails, 0, 119, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR27".
+    /**
+     * Tests HDR algorithm on test samples "testHDR27".
      */
     public void testHDR27() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR27");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR27/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR27/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR27/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR27_output.jpg", true, 40, 1000000000L/949);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR27/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR27/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR27/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 2};
-        int [] exp_offsets_y = {0, 0, 0};
+        subTestHDR(inputs, "testHDR27_output.jpg", true, 40, 1000000000L / 949);
+
+        int[] exp_offsets_x = {0, 0, 2};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR28".
+    /**
+     * Tests HDR algorithm on test samples "testHDR28".
      */
     public void testHDR28() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR28");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR28/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR28/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR28/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR28_output.jpg", true, 294, 1000000000L/20);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR28/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR28/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR28/input2.jpg"));
 
-        int [] exp_offsets_x = {0, 0, 2};
-        int [] exp_offsets_y = {0, 0, -1};
+        subTestHDR(inputs, "testHDR28_output.jpg", true, 294, 1000000000L / 20);
+
+        int[] exp_offsets_x = {0, 0, 2};
+        int[] exp_offsets_y = {0, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR29".
+    /**
+     * Tests HDR algorithm on test samples "testHDR29".
      */
     public void testHDR29() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR29");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR29/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR29/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR29/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDR29_output.jpg", false, 40, 1000000000L/978);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR29/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR29/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR29/input2.jpg"));
 
-        int [] exp_offsets_x = {-1, 0, 3};
-        int [] exp_offsets_y = {0, 0, -1};
+        subTestHDR(inputs, "testHDR29_output.jpg", false, 40, 1000000000L / 978);
+
+        int[] exp_offsets_x = {-1, 0, 3};
+        int[] exp_offsets_y = {0, 0, -1};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR30".
+    /**
+     * Tests HDR algorithm on test samples "testHDR30".
      */
     public void testHDR30() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR30");
@@ -13511,22 +13510,23 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR30/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR30/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR30/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR30/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR30/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR30/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR30_output.jpg", false, 40, 1000000000L/978);
+        subTestHDR(inputs, "testHDR30_output.jpg", false, 40, 1000000000L / 978);
 
         // offsets for full image
         //int [] exp_offsets_x = {-6, 0, -1};
         //int [] exp_offsets_y = {23, 0, -13};
         // offsets using centre quarter image
-        int [] exp_offsets_x = {-5, 0, 0};
-        int [] exp_offsets_y = {22, 0, -13};
+        int[] exp_offsets_x = {-5, 0, 0};
+        int[] exp_offsets_y = {22, 0, -13};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR31".
+    /**
+     * Tests HDR algorithm on test samples "testHDR31".
      */
     public void testHDR31() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR31");
@@ -13535,22 +13535,23 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR31/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR31/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR31/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR31/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR31/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR31/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR31_output.jpg", false, 40, 1000000000L/422);
+        subTestHDR(inputs, "testHDR31_output.jpg", false, 40, 1000000000L / 422);
 
         // offsets for full image
         //int [] exp_offsets_x = {0, 0, 4};
         //int [] exp_offsets_y = {21, 0, -11};
         // offsets using centre quarter image
-        int [] exp_offsets_x = {0, 0, 3};
-        int [] exp_offsets_y = {21, 0, -11};
+        int[] exp_offsets_x = {0, 0, 3};
+        int[] exp_offsets_y = {21, 0, -11};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR32".
+    /**
+     * Tests HDR algorithm on test samples "testHDR32".
      */
     public void testHDR32() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR32");
@@ -13559,14 +13560,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR32/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR32/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR32/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR32/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR32/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR32/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR32_output.jpg", true, 40, 1000000000L/1331);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR32_output.jpg", true, 40, 1000000000L / 1331);
 
-        int [] exp_offsets_x = {1, 0, 0};
-        int [] exp_offsets_y = {13, 0, -10};
+        int[] exp_offsets_x = {1, 0, 0};
+        int[] exp_offsets_y = {13, 0, -10};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 3, 101, 251);
@@ -13575,7 +13576,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 2, 111, 252);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR33".
+    /**
+     * Tests HDR algorithm on test samples "testHDR33".
      */
     public void testHDR33() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR33");
@@ -13584,18 +13586,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR33/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR33/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR33/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR33/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR33/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR33/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR33_output.jpg", true, 40, 1000000000L/354);
+        subTestHDR(inputs, "testHDR33_output.jpg", true, 40, 1000000000L / 354);
 
-        int [] exp_offsets_x = {13, 0, -10};
-        int [] exp_offsets_y = {24, 0, -12};
+        int[] exp_offsets_x = {13, 0, -10};
+        int[] exp_offsets_y = {24, 0, -12};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR34".
+    /**
+     * Tests HDR algorithm on test samples "testHDR34".
      */
     public void testHDR34() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR34");
@@ -13604,18 +13607,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR34/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR34/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR34/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR34/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR34/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR34/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR34_output.jpg", true, 40, 1000000000L/4792);
+        subTestHDR(inputs, "testHDR34_output.jpg", true, 40, 1000000000L / 4792);
 
-        int [] exp_offsets_x = {5, 0, -8};
-        int [] exp_offsets_y = {0, 0, -2};
+        int[] exp_offsets_x = {5, 0, -8};
+        int[] exp_offsets_y = {0, 0, -2};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR35".
+    /**
+     * Tests HDR algorithm on test samples "testHDR35".
      */
     public void testHDR35() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR35");
@@ -13624,18 +13628,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR35/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR35/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR35/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR35/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR35/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR35/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR35_output.jpg", true, 40, 1000000000L/792);
+        subTestHDR(inputs, "testHDR35_output.jpg", true, 40, 1000000000L / 792);
 
-        int [] exp_offsets_x = {-10, 0, 3};
-        int [] exp_offsets_y = {7, 0, -3};
+        int[] exp_offsets_x = {-10, 0, 3};
+        int[] exp_offsets_y = {7, 0, -3};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR36".
+    /**
+     * Tests HDR algorithm on test samples "testHDR36".
      */
     public void testHDR36() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR36");
@@ -13644,18 +13649,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR36/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR36/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR36/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR36/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR36/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR36/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR36_output.jpg", false, 100, 1000000000L/1148);
+        subTestHDR(inputs, "testHDR36_output.jpg", false, 100, 1000000000L / 1148);
 
-        int [] exp_offsets_x = {2, 0, -2};
-        int [] exp_offsets_y = {-4, 0, 2};
+        int[] exp_offsets_x = {2, 0, -2};
+        int[] exp_offsets_y = {-4, 0, 2};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR37".
+    /**
+     * Tests HDR algorithm on test samples "testHDR37".
      */
     public void testHDR37() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR37");
@@ -13664,19 +13670,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR37/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR37/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR37/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR37/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR37/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR37/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR37_output.jpg", false, 46, 1000000000L/120);
+        subTestHDR(inputs, "testHDR37_output.jpg", false, 46, 1000000000L / 120);
 
-        int [] exp_offsets_x = {0, 0, 3};
-        int [] exp_offsets_y = {2, 0, -19};
+        int[] exp_offsets_x = {0, 0, 3};
+        int[] exp_offsets_y = {2, 0, -19};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR38".
-     *  Tests with Filmic tonemapping.
+    /**
+     * Tests HDR algorithm on test samples "testHDR38".
+     * Tests with Filmic tonemapping.
      */
     public void testHDR38Filmic() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR38Filmic");
@@ -13685,21 +13692,22 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR38/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR38/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR38/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR38/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR38/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR38/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR38_filmic_output.jpg", false, 125, 1000000000L/2965, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_FILMIC);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR38_filmic_output.jpg", false, 125, 1000000000L / 2965, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_FILMIC);
 
-        int [] exp_offsets_x = {-1, 0, 0};
-        int [] exp_offsets_y = {0, 0, 0};
+        int[] exp_offsets_x = {-1, 0, 0};
+        int[] exp_offsets_y = {0, 0, 0};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 92, 254);
         checkHistogramDetails(hdrHistogramDetails, 0, 93, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR39".
+    /**
+     * Tests HDR algorithm on test samples "testHDR39".
      */
     public void testHDR39() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR39");
@@ -13708,20 +13716,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR39/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR39/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR39/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR39/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR39/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR39/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR39_output.jpg", false, 125, 1000000000L/2135);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR39_output.jpg", false, 125, 1000000000L / 2135);
 
-        int [] exp_offsets_x = {-6, 0, -2};
-        int [] exp_offsets_y = {6, 0, -8};
+        int[] exp_offsets_x = {-6, 0, -2};
+        int[] exp_offsets_y = {6, 0, -8};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 128, 222);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR40".
+    /**
+     * Tests HDR algorithm on test samples "testHDR40".
      */
     public void testHDR40() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR40");
@@ -13730,20 +13739,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_output.jpg", false, 50, 1000000000L/262);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_output.jpg", false, 50, 1000000000L / 262);
 
-        int [] exp_offsets_x = {5, 0, -2};
-        int [] exp_offsets_y = {13, 0, 24};
+        int[] exp_offsets_x = {5, 0, -2};
+        int[] exp_offsets_y = {13, 0, 24};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         checkHistogramDetails(hdrHistogramDetails, 1, 138, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR40" with Exponential tonemapping.
+    /**
+     * Tests HDR algorithm on test samples "testHDR40" with Exponential tonemapping.
      */
     public void testHDR40Exponential() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR40Exponential");
@@ -13752,20 +13762,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_exponential_output.jpg", false, 50, 1000000000L/262, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_EXPONENTIAL);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_exponential_output.jpg", false, 50, 1000000000L / 262, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_EXPONENTIAL);
 
-        int [] exp_offsets_x = {5, 0, -2};
-        int [] exp_offsets_y = {13, 0, 24};
+        int[] exp_offsets_x = {5, 0, -2};
+        int[] exp_offsets_y = {13, 0, 24};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         checkHistogramDetails(hdrHistogramDetails, 1, 138, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR40" with Filmic tonemapping.
+    /**
+     * Tests HDR algorithm on test samples "testHDR40" with Filmic tonemapping.
      */
     public void testHDR40Filmic() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR40Filmic");
@@ -13774,20 +13785,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR40/input2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_filmic_output.jpg", false, 50, 1000000000L/262, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_FILMIC);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR40_filmic_output.jpg", false, 50, 1000000000L / 262, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_FILMIC);
 
-        int [] exp_offsets_x = {5, 0, -2};
-        int [] exp_offsets_y = {13, 0, 24};
+        int[] exp_offsets_x = {5, 0, -2};
+        int[] exp_offsets_y = {13, 0, 24};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
 
         checkHistogramDetails(hdrHistogramDetails, 1, 130, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR41".
+    /**
+     * Tests HDR algorithm on test samples "testHDR41".
      */
     public void testHDR41() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR41");
@@ -13796,14 +13808,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR41/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR41/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR41/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR41/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR41/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR41/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR41_output.jpg", false, 925, 1000000000L/25);
+        subTestHDR(inputs, "testHDR41_output.jpg", false, 925, 1000000000L / 25);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR42".
+    /**
+     * Tests HDR algorithm on test samples "testHDR42".
      */
     public void testHDR42() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR42");
@@ -13812,14 +13825,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR42/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR42/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR42/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR42/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR42/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR42/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR42_output.jpg", false, 112, 1000000000L/679);
+        subTestHDR(inputs, "testHDR42_output.jpg", false, 112, 1000000000L / 679);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR43".
+    /**
+     * Tests HDR algorithm on test samples "testHDR43".
      */
     public void testHDR43() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR43");
@@ -13828,14 +13842,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR43/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR43/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR43/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR43/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR43/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR43/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR43_output.jpg", false, 1196, 1000000000L/12);
+        subTestHDR(inputs, "testHDR43_output.jpg", false, 1196, 1000000000L / 12);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR44".
+    /**
+     * Tests HDR algorithm on test samples "testHDR44".
      */
     public void testHDR44() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR44");
@@ -13844,14 +13859,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR44/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR44/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR44/input2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR44/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR44/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR44/input2.jpg"));
 
-        subTestHDR(inputs, "testHDR44_output.jpg", false, 100, 1000000000L/1016);
+        subTestHDR(inputs, "testHDR44_output.jpg", false, 100, 1000000000L / 1016);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR45".
+    /**
+     * Tests HDR algorithm on test samples "testHDR45".
      */
     public void testHDR45() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR45");
@@ -13862,9 +13878,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6314.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6312.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6313.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6315.jpg") );
 
@@ -13872,7 +13888,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestHDR(inputs, "testHDR45_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR45".
+    /**
+     * Tests HDR algorithm on test samples "testHDR45".
      */
     public void testHDR45_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR45_exp5");
@@ -13882,17 +13899,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6314.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6312.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6313.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6312.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6313.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6315.jpg") );
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR45_exp5_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR45".
+    /**
+     * Tests HDR algorithm on test samples "testHDR45".
      */
     public void testHDR45_exp7() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR45_exp7");
@@ -13901,18 +13919,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6314.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6312.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6313.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6315.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6314.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6312.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6310.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6309.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6311.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6313.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR45/IMG_6315.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR45_exp7_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR46".
+    /**
+     * Tests HDR algorithm on test samples "testHDR46".
      */
     public void testHDR46() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR46");
@@ -13923,16 +13942,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 06.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 04.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 03.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 02.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 04.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 03.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 02.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 01.jpg") );
 
         // ISO 100, exposure time 1/60s, but pass in -1 since these are HDRNTests
         subTestHDR(inputs, "testHDR46_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR46".
+    /**
+     * Tests HDR algorithm on test samples "testHDR46".
      */
     public void testHDR46_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR46_exp5");
@@ -13942,16 +13962,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 06.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 04.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 03.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 02.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 01.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 05.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 04.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 03.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 02.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR46/Izmir Harbor - ppw - 01.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR46_exp5_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR47".
+    /**
+     * Tests HDR algorithm on test samples "testHDR47".
      */
     public void testHDR47_exp2() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR47_exp2");
@@ -13961,13 +13982,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
 
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg"));
 
         subTestHDR(inputs, "testHDR47_exp2_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR47".
+    /**
+     * Tests HDR algorithm on test samples "testHDR47".
      */
     public void testHDR47() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR47");
@@ -13980,9 +14002,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 08.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 07.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 06.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 02.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 01.jpg") );
 
@@ -13990,7 +14012,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestHDR(inputs, "testHDR47_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR47".
+    /**
+     * Tests HDR algorithm on test samples "testHDR47".
      */
     public void testHDR47_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR47_exp5");
@@ -14001,11 +14024,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 08.jpg") );
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 07.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 06.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 02.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 06.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 02.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 01.jpg") );
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR47_exp5_output.jpg", false, -1, -1);
@@ -14013,7 +14036,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 1, 73, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR47".
+    /**
+     * Tests HDR algorithm on test samples "testHDR47".
      */
     public void testHDR47_exp7() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR47_exp7");
@@ -14023,20 +14047,21 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 08.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 07.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 06.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 02.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 01.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 07.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 06.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 05.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 04.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 03.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 02.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR47/High Five - ppw - 01.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR47_exp7_output.jpg", false, -1, -1);
 
         checkHistogramDetails(hdrHistogramDetails, 1, 73, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR48".
+    /**
+     * Tests HDR algorithm on test samples "testHDR48".
      */
     public void testHDR48() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR48");
@@ -14047,16 +14072,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<Bitmap> inputs = new ArrayList<>();
 
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input3.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input3.jpg"));
         //inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input4.jpg") );
 
         // ISO 100, exposure time 1/716s, but pass in -1 since these are HDRNTests
         subTestHDR(inputs, "testHDR48_output.jpg", false, -1, -1);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR48".
+    /**
+     * Tests HDR algorithm on test samples "testHDR48".
      */
     public void testHDR48_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR48_exp5");
@@ -14066,18 +14092,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
 
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input3.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR48/input4.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input3.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR48/input4.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR48_exp5_output.jpg", false, -1, -1);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 59, 241);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR49".
+    /**
+     * Tests HDR algorithm on test samples "testHDR49".
      */
     public void testHDR49_exp2() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR49_exp2");
@@ -14086,15 +14113,16 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR49_exp2_output.jpg", false, -1, -1);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 92, 250);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR49".
+    /**
+     * Tests HDR algorithm on test samples "testHDR49".
      */
     public void testHDR49() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR49");
@@ -14103,9 +14131,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg"));
 
         // ISO 100, exposure time 1/417s, but pass in -1 since these are HDRNTests
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR49_output.jpg", false, -1, -1);
@@ -14113,7 +14141,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR49".
+    /**
+     * Tests HDR algorithm on test samples "testHDR49".
      */
     public void testHDR49_exp4() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR49_exp4");
@@ -14122,10 +14151,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input4.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input4.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR49_exp4_output.jpg", false, -1, -1);
 
@@ -14133,7 +14162,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 94, 244);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR49".
+    /**
+     * Tests HDR algorithm on test samples "testHDR49".
      */
     public void testHDR49_exp5() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR49_exp5");
@@ -14142,18 +14172,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input2.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR49/input4.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input2.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input3.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR49/input4.jpg"));
 
         HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR49_exp5_output.jpg", false, -1, -1);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 72, 244);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR50".
+    /**
+     * Tests HDR algorithm on test samples "testHDR50".
      */
     public void testHDR50() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR50");
@@ -14162,16 +14193,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR50/IMG_20180626_221357_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR50_output.jpg", false, 867, 1000000000L/14);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR50_output.jpg", false, 867, 1000000000L / 14);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 69, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR51".
+    /**
+     * Tests HDR algorithm on test samples "testHDR51".
      */
     public void testHDR51() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR51");
@@ -14180,16 +14212,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR51/IMG_20180323_104702_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR51_output.jpg", true, 1600, 1000000000L/11);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR51_output.jpg", true, 1600, 1000000000L / 11);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR52".
+    /**
+     * Tests HDR algorithm on test samples "testHDR52".
      */
     public void testHDR52() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR52");
@@ -14198,16 +14231,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR52/IMG_20181023_143633_EXP2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR52_output.jpg", false, 100, 1000000000L/2105);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR52_output.jpg", false, 100, 1000000000L / 2105);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR53".
+    /**
+     * Tests HDR algorithm on test samples "testHDR53".
      */
     public void testHDR53() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR53");
@@ -14216,16 +14250,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR53/IMG_20181106_135411_EXP2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR53_output.jpg", false, 103, 1000000000L/5381);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR53_output.jpg", false, 103, 1000000000L / 5381);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 55, 254);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR54".
+    /**
+     * Tests HDR algorithm on test samples "testHDR54".
      */
     public void testHDR54() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR54");
@@ -14234,16 +14269,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR54/IMG_20181107_115508_EXP2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR54_output.jpg", false, 752, 1000000000L/14);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR54_output.jpg", false, 752, 1000000000L / 14);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR55".
+    /**
+     * Tests HDR algorithm on test samples "testHDR55".
      */
     public void testHDR55() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR55");
@@ -14252,16 +14288,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR55/IMG_20181107_115608_EXP2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR55_output.jpg", false, 1505, 1000000000L/10);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR55_output.jpg", false, 1505, 1000000000L / 10);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR56".
+    /**
+     * Tests HDR algorithm on test samples "testHDR56".
      */
     public void testHDR56() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR56");
@@ -14270,16 +14307,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR56/180502_141722_OC_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR56_output.jpg", false, 50, 1000000000L/40);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR56_output.jpg", false, 50, 1000000000L / 40);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR57".
+    /**
+     * Tests HDR algorithm on test samples "testHDR57".
      */
     public void testHDR57() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR57");
@@ -14288,16 +14326,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR57/IMG_20181119_145313_EXP2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR57_output.jpg", true, 100, 1000000000L/204);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR57_output.jpg", true, 100, 1000000000L / 204);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR58".
+    /**
+     * Tests HDR algorithm on test samples "testHDR58".
      */
     public void testHDR58() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR58");
@@ -14306,17 +14345,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR58/IMG_20190911_210146_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR58_output.jpg", false, 1250, 1000000000L/10);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR58_output.jpg", false, 1250, 1000000000L / 10);
         //HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR58_output.jpg", false, 1250, 1000000000L/10, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_CLAMP);
 
         checkHistogramDetails(hdrHistogramDetails, 11, 119, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR59".
+    /**
+     * Tests HDR algorithm on test samples "testHDR59".
      */
     public void testHDR59() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR59");
@@ -14325,17 +14365,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR59/IMG_20190911_210154_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR59_output.jpg", false, 1250, 1000000000L/10);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR59_output.jpg", false, 1250, 1000000000L / 10);
         //HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR59_output.jpg", false, 1250, 1000000000L/10, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_CLAMP);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR60".
+    /**
+     * Tests HDR algorithm on test samples "testHDR60".
      */
     public void testHDR60() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR60");
@@ -14344,17 +14385,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR60/IMG_20200507_020319_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR60_output.jpg", false, 491, 1000000000L/10);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR60_output.jpg", false, 491, 1000000000L / 10);
         //HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR60_output.jpg", false, 491, 1000000000L/10, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_CLAMP);
 
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests HDR algorithm on test samples "testHDR61".
+    /**
+     * Tests HDR algorithm on test samples "testHDR61".
      */
     public void testHDR61() throws IOException, InterruptedException {
         Log.d(TAG, "testHDR61");
@@ -14363,38 +14405,40 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_2.jpg") );
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDR61/IMG_20191111_145230_2.jpg"));
 
-        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR61_output.jpg", false, 50, 1000000000L/5025);
+        HistogramDetails hdrHistogramDetails = subTestHDR(inputs, "testHDR61_output.jpg", false, 50, 1000000000L / 5025);
 
         checkHistogramDetails(hdrHistogramDetails, 0, 86, 254);
 
-        int [] exp_offsets_x = {0, 0, 1};
-        int [] exp_offsets_y = {0, 0, -2};
+        int[] exp_offsets_x = {0, 0, 1};
+        int[] exp_offsets_y = {0, 0, -2};
         checkHDROffsets(exp_offsets_x, exp_offsets_y);
     }
 
-    /** Tests HDR algorithm on test samples "testHDRtemp".
-     *  Used for one-off testing, or to recreate HDR images from the base exposures to test an updated algorithm.
-     *  The test images should be copied to the test device into DCIM/testOpenCamera/testdata/hdrsamples/testHDRtemp/ .
+    /**
+     * Tests HDR algorithm on test samples "testHDRtemp".
+     * Used for one-off testing, or to recreate HDR images from the base exposures to test an updated algorithm.
+     * The test images should be copied to the test device into DCIM/testOpenCamera/testdata/hdrsamples/testHDRtemp/ .
      */
     public void testHDRtemp() throws IOException, InterruptedException {
         Log.d(TAG, "testHDRtemp");
 
         setToDefault();
-        
+
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDRtemp/input0.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDRtemp/input1.jpg") );
-        inputs.add( getBitmapFromFile(hdr_images_path + "testHDRtemp/input2.jpg") );
-        
-        subTestHDR(inputs, "testHDRtemp_output.jpg", true, 100, 1000000000L/100);
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDRtemp/input0.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDRtemp/input1.jpg"));
+        inputs.add(getBitmapFromFile(hdr_images_path + "testHDRtemp/input2.jpg"));
+
+        subTestHDR(inputs, "testHDRtemp_output.jpg", true, 100, 1000000000L / 100);
     }
 
-    /** Tests DRO only on a dark image.
+    /**
+     * Tests DRO only on a dark image.
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void testDRODark0() throws IOException, InterruptedException {
@@ -14404,12 +14448,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(avg_images_path + "testAvg3/input0.jpg") );
+        inputs.add(getBitmapFromFile(avg_images_path + "testAvg3/input0.jpg"));
 
         subTestHDR(inputs, "testDRODark0_output.jpg", true, -1, -1);
     }
 
-    /** Tests DRO only on a dark image.
+    /**
+     * Tests DRO only on a dark image.
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void testDRODark1() throws IOException, InterruptedException {
@@ -14419,18 +14464,19 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // list assets
         List<Bitmap> inputs = new ArrayList<>();
-        inputs.add( getBitmapFromFile(avg_images_path + "testAvg8/input0.jpg") );
+        inputs.add(getBitmapFromFile(avg_images_path + "testAvg8/input0.jpg"));
 
         subTestHDR(inputs, "testDRODark1_output.jpg", true, -1, -1);
     }
 
-    /** Tests calling the DRO routine with 0.0 factor, and DROALGORITHM_NONE - and that the resultant image is identical.
+    /**
+     * Tests calling the DRO routine with 0.0 factor, and DROALGORITHM_NONE - and that the resultant image is identical.
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void testDROZero() throws IOException, InterruptedException {
         Log.d(TAG, "testDROZero");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "renderscript requires Android Lollipop or better");
             return;
         }
@@ -14446,8 +14492,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(bitmap);
         try {
             mActivity.getApplicationInterface().getHDRProcessor().processHDR(inputs, true, null, true, null, 0.0f, 4, true, HDRProcessor.TonemappingAlgorithm.TONEMAPALGORITHM_REINHARD, HDRProcessor.DROTonemappingAlgorithm.DROALGORITHM_NONE);
-        }
-        catch(HDRProcessorException e) {
+        } catch (HDRProcessorException e) {
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -14462,13 +14507,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //assertTrue( bitmap.sameAs(bitmap_saved) );
         assertEquals(bitmap.getWidth(), bitmap_saved.getWidth());
         assertEquals(bitmap.getHeight(), bitmap_saved.getHeight());
-        int [] old_row = new int[bitmap.getWidth()];
-        int [] new_row = new int[bitmap.getWidth()];
-        for(int y=0;y<bitmap.getHeight();y++) {
+        int[] old_row = new int[bitmap.getWidth()];
+        int[] new_row = new int[bitmap.getWidth()];
+        for (int y = 0; y < bitmap.getHeight(); y++) {
             //Log.d(TAG, "check row " + y + " / " + bitmap.getHeight());
             bitmap_saved.getPixels(old_row, 0, bitmap.getWidth(), 0, y, bitmap.getWidth(), 1);
             bitmap.getPixels(new_row, 0, bitmap.getWidth(), 0, y, bitmap.getWidth(), 1);
-            for(int x=0;x<bitmap.getWidth();x++) {
+            for (int x = 0; x < bitmap.getWidth(); x++) {
                 //int old_pixel = bitmap_saved.getPixel(x, y);
                 //int new_pixel = bitmap.getPixel(x, y);
                 int old_pixel = old_row[x];
@@ -14483,21 +14528,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     }
 
-    private interface TestAvgCallback {
-        void doneProcessAvg(int index); // called after every call to HDRProcessor.processAvg()
-    }
-
-    /** The following testAvgX tests test the Avg noise reduction algorithm on a given set of input images.
-     *  By testing on a fixed sample, this makes it easier to finetune the algorithm for quality and performance.
-     *  To use these tests, the testdata/ subfolder should be manually copied to the test device in the DCIM/testOpenCamera/
-     *  folder (so you have DCIM/testOpenCamera/testdata/). We don't use assets/ as we'd end up with huge APK sizes which takes
-     *  time to transfer to the device everytime we run the tests.
+    /**
+     * The following testAvgX tests test the Avg noise reduction algorithm on a given set of input images.
+     * By testing on a fixed sample, this makes it easier to finetune the algorithm for quality and performance.
+     * To use these tests, the testdata/ subfolder should be manually copied to the test device in the DCIM/testOpenCamera/
+     * folder (so you have DCIM/testOpenCamera/testdata/). We don't use assets/ as we'd end up with huge APK sizes which takes
+     * time to transfer to the device everytime we run the tests.
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private HistogramDetails subTestAvg(List<String> inputs, String output_name, int iso, long exposure_time, float zoom_factor, TestAvgCallback cb) throws IOException, InterruptedException {
         Log.d(TAG, "subTestAvg");
 
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             Log.d(TAG, "renderscript requires Android Lollipop or better");
             return null;
         }
@@ -14548,20 +14590,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             Allocation allocation = avg_data.allocation_out;
             times.add(System.currentTimeMillis() - time_s);
             // processAvg recycles both bitmaps
-            if( cb != null ) {
+            if (cb != null) {
                 cb.doneProcessAvg(1);
             }
 
-            for(int i=2;i<inputs.size();i++) {
+            for (int i = 2; i < inputs.size(); i++) {
                 Log.d(TAG, "processAvg for image: " + i);
 
                 Bitmap new_bitmap = getBitmapFromFile(inputs.get(i), inSampleSize);
-                avg_factor = (float)i;
+                avg_factor = (float) i;
                 time_s = System.currentTimeMillis();
                 mActivity.getApplicationInterface().getHDRProcessor().updateAvg(avg_data, width, height, new_bitmap, avg_factor, iso, zoom_factor);
                 times.add(System.currentTimeMillis() - time_s);
                 // updateAvg recycles new_bitmap
-                if( cb != null ) {
+                if (cb != null) {
                     cb.doneProcessAvg(i);
                 }
             }
@@ -14575,13 +14617,12 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
             long total_time = 0;
             Log.d(TAG, "*** times are:");
-            for(long time : times) {
+            for (long time : times) {
                 total_time += time;
                 Log.d(TAG, "    " + time);
             }
             Log.d(TAG, "    total: " + total_time);
-        }
-        catch(HDRProcessorException e) {
+        } catch (HDRProcessorException e) {
             e.printStackTrace();
             throw new RuntimeException();
         }
@@ -14597,7 +14638,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         return hdrHistogramDetails;
     }
 
-    /** Tests Avg algorithm on test samples "testAvg1".
+    /**
+     * Tests Avg algorithm on test samples "testAvg1".
      */
     public void testAvg1() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg1");
@@ -14612,23 +14654,22 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg1_output.jpg", 1600, 1000000000L/17, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg1_output.jpg", 1600, 1000000000L / 17, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, 3, 0};
                     //int [] exp_offsets_y = {0, 1, 0};
                     //int [] exp_offsets_x = {0, 4, 0};
                     //int [] exp_offsets_y = {0, 1, 0};
                     //int [] exp_offsets_x = {0, 2, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
-                    int [] exp_offsets_x = {0, 4, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                    int[] exp_offsets_x = {0, 4, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
+                } else if (index == 2) {
                     //int [] exp_offsets_x = {0, 6, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
                     //int [] exp_offsets_x = {0, 8, 0};
@@ -14637,11 +14678,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     //int [] exp_offsets_y = {0, -1, 0};
                     //int [] exp_offsets_x = {0, 8, 0};
                     //int [] exp_offsets_y = {0, -4, 0};
-                    int [] exp_offsets_x = {0, 8, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                    int[] exp_offsets_x = {0, 8, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -14650,7 +14690,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg2".
+    /**
+     * Tests Avg algorithm on test samples "testAvg2".
      */
     public void testAvg2() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg2");
@@ -14665,34 +14706,32 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg2_output.jpg", 1600, 1000000000L/17, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg2_output.jpg", 1600, 1000000000L / 17, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, -15, 0};
                     //int [] exp_offsets_y = {0, -10, 0};
                     //int [] exp_offsets_x = {0, -15, 0};
                     //int [] exp_offsets_y = {0, -11, 0};
                     //int [] exp_offsets_x = {0, -12, 0};
                     //int [] exp_offsets_y = {0, -12, 0};
-                    int [] exp_offsets_x = {0, -16, 0};
-                    int [] exp_offsets_y = {0, -12, 0};
+                    int[] exp_offsets_x = {0, -16, 0};
+                    int[] exp_offsets_y = {0, -12, 0};
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
+                } else if (index == 2) {
                     //int [] exp_offsets_x = {0, -15, 0};
                     //int [] exp_offsets_y = {0, -10, 0};
                     //int [] exp_offsets_x = {0, -13, 0};
                     //int [] exp_offsets_y = {0, -12, 0};
                     //int [] exp_offsets_x = {0, -12, 0};
                     //int [] exp_offsets_y = {0, -14, 0};
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, -12, 0};
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, -12, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -14701,7 +14740,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg3".
+    /**
+     * Tests Avg algorithm on test samples "testAvg3".
      */
     public void testAvg3() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg3");
@@ -14718,7 +14758,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg3_output.jpg", 1600, 1000000000L/16, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg3_output.jpg", 1600, 1000000000L / 16, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -14792,7 +14832,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 21, 166);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg4".
+    /**
+     * Tests Avg algorithm on test samples "testAvg4".
      */
     public void testAvg4() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg4");
@@ -14809,46 +14850,42 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg4_output.jpg", 1600, 1000000000L/16, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg4_output.jpg", 1600, 1000000000L / 16, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, 5, 0};
                     //int [] exp_offsets_y = {0, 2, 0};
-                    int [] exp_offsets_x = {0, 5, 0};
-                    int [] exp_offsets_y = {0, 1, 0};
+                    int[] exp_offsets_x = {0, 5, 0};
+                    int[] exp_offsets_y = {0, 1, 0};
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
+                } else if (index == 2) {
                     //int [] exp_offsets_x = {0, 3, 0};
                     //int [] exp_offsets_y = {0, 5, 0};
-                    int [] exp_offsets_x = {0, 4, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                    int[] exp_offsets_x = {0, 4, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
+                } else if (index == 3) {
                     //int [] exp_offsets_x = {0, 0, 0};
                     //int [] exp_offsets_y = {0, 7, 0};
                     //int [] exp_offsets_x = {0, 1, 0};
                     //int [] exp_offsets_y = {0, 6, 0};
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 8, 0};
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 8, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 4 ) {
+                } else if (index == 4) {
                     //int [] exp_offsets_x = {0, 4, 0};
                     //int [] exp_offsets_y = {0, 8, 0};
                     //int [] exp_offsets_x = {0, 3, 0};
                     //int [] exp_offsets_y = {0, 7, 0};
                     //int [] exp_offsets_x = {0, 3, 0};
                     //int [] exp_offsets_y = {0, 8, 0};
-                    int [] exp_offsets_x = {0, 3, 0};
-                    int [] exp_offsets_y = {0, 9, 0};
+                    int[] exp_offsets_x = {0, 3, 0};
+                    int[] exp_offsets_y = {0, 9, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -14857,7 +14894,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg5".
+    /**
+     * Tests Avg algorithm on test samples "testAvg5".
      */
     public void testAvg5() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg5");
@@ -14874,7 +14912,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg5_output.jpg", 1600, 1000000000L/16, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg5_output.jpg", 1600, 1000000000L / 16, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -14924,7 +14962,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg6".
+    /**
+     * Tests Avg algorithm on test samples "testAvg6".
      */
     public void testAvg6() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg6");
@@ -14944,53 +14983,46 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg6_output.jpg", 1600, 1000000000L/17, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg6_output.jpg", 1600, 1000000000L / 17, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
                 /*if( true )
                     return;*/
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, 0, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
                     //int [] exp_offsets_x = {0, -2, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
-                }
-                else if( index == 2 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 2) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 3) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 4 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 4) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 5 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 5) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 6 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 6) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 7 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 7) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -15007,7 +15039,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 5, 16, 190);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg7".
+    /**
+     * Tests Avg algorithm on test samples "testAvg7".
      */
     public void testAvg7() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg7");
@@ -15027,11 +15060,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg7_output.jpg", 1600, 1000000000L/16, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg7_output.jpg", 1600, 1000000000L / 16, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, 0, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
                     //int [] exp_offsets_x = {0, -10, 0};
@@ -15044,8 +15077,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     //int [] exp_offsets_y = {0, 0, 0};
                     //int [] exp_offsets_x = {0, -4, 0};
                     //int [] exp_offsets_y = {0, 0, 0};
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
@@ -15055,7 +15088,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg8".
+    /**
+     * Tests Avg algorithm on test samples "testAvg8".
      */
     public void testAvg8() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg8");
@@ -15075,11 +15109,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg8_output.jpg", 1600, 1000000000L/16, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg8_output.jpg", 1600, 1000000000L / 16, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15094,7 +15128,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 1, 16, 78);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg9".
+    /**
+     * Tests Avg algorithm on test samples "testAvg9".
      */
     public void testAvg9() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg9");
@@ -15105,7 +15140,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<String> inputs = new ArrayList<>();
         final boolean use_auto_photos = true;
 
-        if( use_auto_photos ) {
+        if (use_auto_photos) {
             inputs.add(avg_images_path + "testAvg9/input_auto0.jpg");
             inputs.add(avg_images_path + "testAvg9/input_auto1.jpg");
             inputs.add(avg_images_path + "testAvg9/input_auto2.jpg");
@@ -15114,8 +15149,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             inputs.add(avg_images_path + "testAvg9/input_auto5.jpg");
             inputs.add(avg_images_path + "testAvg9/input_auto6.jpg");
             inputs.add(avg_images_path + "testAvg9/input_auto7.jpg");
-        }
-        else {
+        } else {
             inputs.add(avg_images_path + "testAvg9/input0.jpg");
             inputs.add(avg_images_path + "testAvg9/input1.jpg");
             inputs.add(avg_images_path + "testAvg9/input2.jpg");
@@ -15130,11 +15164,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, out_filename, 1600, use_auto_photos ? 1000000000L/16 : 1000000000L/11, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, out_filename, 1600, use_auto_photos ? 1000000000L / 16 : 1000000000L / 11, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15143,7 +15177,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg10".
+    /**
+     * Tests Avg algorithm on test samples "testAvg10".
      */
     public void testAvg10() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg10");
@@ -15154,7 +15189,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         List<String> inputs = new ArrayList<>();
         final boolean use_auto_photos = false;
 
-        if( use_auto_photos ) {
+        if (use_auto_photos) {
             inputs.add(avg_images_path + "testAvg10/input_auto0.jpg");
             inputs.add(avg_images_path + "testAvg10/input_auto1.jpg");
             inputs.add(avg_images_path + "testAvg10/input_auto2.jpg");
@@ -15163,8 +15198,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             inputs.add(avg_images_path + "testAvg10/input_auto5.jpg");
             inputs.add(avg_images_path + "testAvg10/input_auto6.jpg");
             inputs.add(avg_images_path + "testAvg10/input_auto7.jpg");
-        }
-        else {
+        } else {
             inputs.add(avg_images_path + "testAvg10/input0.jpg");
             inputs.add(avg_images_path + "testAvg10/input1.jpg");
             inputs.add(avg_images_path + "testAvg10/input2.jpg");
@@ -15177,11 +15211,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         String out_filename = use_auto_photos ? "testAvg10_auto_output.jpg" : "testAvg10_output.jpg";
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, out_filename, 1196, use_auto_photos ? 1000000000L/12 : 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, out_filename, 1196, use_auto_photos ? 1000000000L / 12 : 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15190,7 +15224,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg11".
+    /**
+     * Tests Avg algorithm on test samples "testAvg11".
      */
     public void testAvg11() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg11");
@@ -15210,32 +15245,30 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg11/input6.jpg");
         inputs.add(avg_images_path + "testAvg11/input7.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg11_output.jpg", 100, 1000000000L/338, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg11_output.jpg", 100, 1000000000L / 338, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //int [] exp_offsets_x = {0, 4, 0};
                     //int [] exp_offsets_y = {0, -8, 0};
                     //int [] exp_offsets_x = {0, 6, 0};
                     //int [] exp_offsets_y = {0, -8, 0};
                     //int [] exp_offsets_x = {0, -6, 0};
                     //int [] exp_offsets_y = {0, 8, 0};
-                    int [] exp_offsets_x = {0, -4, 0};
-                    int [] exp_offsets_y = {0, 8, 0};
+                    int[] exp_offsets_x = {0, -4, 0};
+                    int[] exp_offsets_y = {0, 8, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     //assertTrue(mActivity.getApplicationInterface().getHDRProcessor().sharp_index == 1);
-                }
-                else if( index == 2 ) {
+                } else if (index == 2) {
                     //int [] exp_offsets_x = {0, -5, 0};
                     //int [] exp_offsets_y = {0, -1, 0};
                     //int [] exp_offsets_x = {0, -10, 0};
                     //int [] exp_offsets_y = {0, 6, 0};
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, 8, 0};
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, 8, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
+                } else if (index == 3) {
                     //int [] exp_offsets_x = {0, -1, 0};
                     //int [] exp_offsets_y = {0, -18, 0};
                     //int [] exp_offsets_x = {0, 0, 0};
@@ -15244,44 +15277,40 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     //int [] exp_offsets_y = {0, -10, 0};
                     //int [] exp_offsets_x = {0, -4, 0};
                     //int [] exp_offsets_y = {0, -8, 0};
-                    int [] exp_offsets_x = {0, -4, 0};
-                    int [] exp_offsets_y = {0, -12, 0};
+                    int[] exp_offsets_x = {0, -4, 0};
+                    int[] exp_offsets_y = {0, -12, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 4 ) {
+                } else if (index == 4) {
                     //int [] exp_offsets_x = {0, -3, 0};
                     //int [] exp_offsets_y = {0, -20, 0};
                     //int [] exp_offsets_x = {0, -2, 0};
                     //int [] exp_offsets_y = {0, -18, 0};
                     //int [] exp_offsets_x = {0, -6, 0};
                     //int [] exp_offsets_y = {0, -12, 0};
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, -12, 0};
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, -12, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 5 ) {
+                } else if (index == 5) {
                     //int [] exp_offsets_x = {0, -8, 0};
                     //int [] exp_offsets_y = {0, 2, 0};
                     //int [] exp_offsets_x = {0, -10, 0};
                     //int [] exp_offsets_y = {0, 4, 0};
                     //int [] exp_offsets_x = {0, -12, 0};
                     //int [] exp_offsets_y = {0, 10, 0};
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, 8, 0};
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, 8, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 6 ) {
+                } else if (index == 6) {
                     //int [] exp_offsets_x = {0, 0, 0};
                     //int [] exp_offsets_y = {0, -6, 0};
                     //int [] exp_offsets_x = {0, 2, 0};
                     //int [] exp_offsets_y = {0, -6, 0};
                     //int [] exp_offsets_x = {0, -4, 0};
                     //int [] exp_offsets_y = {0, 2, 0};
-                    int [] exp_offsets_x = {0, -4, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                    int[] exp_offsets_x = {0, -4, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 7 ) {
+                } else if (index == 7) {
                     //int [] exp_offsets_x = {0, 7, 0};
                     //int [] exp_offsets_y = {0, -2, 0};
                     //int [] exp_offsets_x = {0, 6, 0};
@@ -15290,11 +15319,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
                     //int [] exp_offsets_y = {0, 4, 0};
                     //int [] exp_offsets_x = {0, 8, 0};
                     //int [] exp_offsets_y = {0, 8, 0};
-                    int [] exp_offsets_x = {0, 4, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                    int[] exp_offsets_x = {0, 4, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -15303,7 +15331,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg12".
+    /**
+     * Tests Avg algorithm on test samples "testAvg12".
      */
     public void testAvg12() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg12");
@@ -15315,11 +15344,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg12/input0.jpg");
         inputs.add(avg_images_path + "testAvg12/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg12_output.jpg", 100, 1000000000L/1617, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg12_output.jpg", 100, 1000000000L / 1617, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //assertTrue(mActivity.getApplicationInterface().getHDRProcessor().sharp_index == 1);
                 }
             }
@@ -15331,7 +15360,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 17, 254);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg13".
+    /**
+     * Tests Avg algorithm on test samples "testAvg13".
      */
     public void testAvg13() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg13");
@@ -15343,11 +15373,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg13/input0.jpg");
         inputs.add(avg_images_path + "testAvg13/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg13_output.jpg", 100, 1000000000L/2482, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg13_output.jpg", 100, 1000000000L / 2482, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //assertTrue(mActivity.getApplicationInterface().getHDRProcessor().sharp_index == 1);
                 }
             }
@@ -15356,7 +15386,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg14".
+    /**
+     * Tests Avg algorithm on test samples "testAvg14".
      */
     public void testAvg14() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg14");
@@ -15376,21 +15407,20 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg14_output.jpg", 1600, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg14_output.jpg", 1600, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, -8, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, -8, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
-                }
-                else if( index == 7 ) {
+                } else if (index == 7) {
                     //int [] exp_offsets_x = {0, 4, 0};
                     //int [] exp_offsets_y = {0, 28, 0};
-                    int [] exp_offsets_x = {0, 4, 0};
-                    int [] exp_offsets_y = {0, 40, 0};
+                    int[] exp_offsets_x = {0, 4, 0};
+                    int[] exp_offsets_y = {0, 40, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                 }
             }
@@ -15399,7 +15429,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg15".
+    /**
+     * Tests Avg algorithm on test samples "testAvg15".
      */
     public void testAvg15() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg15");
@@ -15411,11 +15442,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg15/input0.jpg");
         inputs.add(avg_images_path + "testAvg15/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg15_output.jpg", 100, 1000000000L/1525, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg15_output.jpg", 100, 1000000000L / 1525, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15424,7 +15455,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg16".
+    /**
+     * Tests Avg algorithm on test samples "testAvg16".
      */
     public void testAvg16() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg16");
@@ -15436,11 +15468,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg16/input0.jpg");
         inputs.add(avg_images_path + "testAvg16/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg16_output.jpg", 100, 1000000000L/293, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg16_output.jpg", 100, 1000000000L / 293, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //assertTrue(mActivity.getApplicationInterface().getHDRProcessor().sharp_index == 1);
                 }
             }
@@ -15449,7 +15481,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg17".
+    /**
+     * Tests Avg algorithm on test samples "testAvg17".
      */
     public void testAvg17() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg17");
@@ -15469,19 +15502,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         // the input images record ISO=800, but they were taken with OnePlus 3T which has bug where ISO is reported as max
         // of 800; in reality for a scene this dark, it was probably more like ISO 1600
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg17_output.jpg", 1600, 1000000000L/17, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg17_output.jpg", 1600, 1000000000L / 17, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
-                }
-                else if( index == 7 ) {
-                    int [] exp_offsets_x = {0, 12, 0};
-                    int [] exp_offsets_y = {0, 28, 0};
+                } else if (index == 7) {
+                    int[] exp_offsets_x = {0, 12, 0};
+                    int[] exp_offsets_y = {0, 28, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                 }
             }
@@ -15495,7 +15527,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 103, 244);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg18".
+    /**
+     * Tests Avg algorithm on test samples "testAvg18".
      */
     public void testAvg18() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg18");
@@ -15507,11 +15540,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg18/input0.jpg");
         inputs.add(avg_images_path + "testAvg18/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg18_output.jpg", 100, 1000000000L/591, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg18_output.jpg", 100, 1000000000L / 591, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     //assertTrue(mActivity.getApplicationInterface().getHDRProcessor().sharp_index == 1);
                 }
             }
@@ -15520,7 +15553,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg19".
+    /**
+     * Tests Avg algorithm on test samples "testAvg19".
      */
     public void testAvg19() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg19");
@@ -15533,11 +15567,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg19/input0.jpg");
         inputs.add(avg_images_path + "testAvg19/input0.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg19_output.jpg", 100, 1000000000L/2483, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg19_output.jpg", 100, 1000000000L / 2483, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15550,7 +15584,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 58, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg20".
+    /**
+     * Tests Avg algorithm on test samples "testAvg20".
      */
     public void testAvg20() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg20");
@@ -15563,11 +15598,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg20/input0.jpg");
         inputs.add(avg_images_path + "testAvg20/input0.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg20_output.jpg", 100, 1000000000L/3124, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg20_output.jpg", 100, 1000000000L / 3124, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15576,7 +15611,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg21".
+    /**
+     * Tests Avg algorithm on test samples "testAvg21".
      */
     public void testAvg21() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg21");
@@ -15589,11 +15625,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg21/input0.jpg");
         inputs.add(avg_images_path + "testAvg21/input0.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg21_output.jpg", 102, 1000000000L/6918, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg21_output.jpg", 102, 1000000000L / 6918, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15602,7 +15638,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg22".
+    /**
+     * Tests Avg algorithm on test samples "testAvg22".
      */
     public void testAvg22() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg22");
@@ -15615,11 +15652,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg22/input0.jpg");
         inputs.add(avg_images_path + "testAvg22/input0.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg22_output.jpg", 100, 1000000000L/3459, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg22_output.jpg", 100, 1000000000L / 3459, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
+                if (index == 1) {
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
                 }
             }
@@ -15628,7 +15665,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg23".
+    /**
+     * Tests Avg algorithm on test samples "testAvg23".
      */
     public void testAvg23() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg23");
@@ -15647,46 +15685,39 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg23/IMG_20180520_111250_6.jpg");
         inputs.add(avg_images_path + "testAvg23/IMG_20180520_111250_7.jpg");*/
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg23_output.jpg", 1044, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg23_output.jpg", 1044, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, -4, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, -4, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
-                    int [] exp_offsets_x = {0, -4, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 2) {
+                    int[] exp_offsets_x = {0, -4, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                } else if (index == 3) {
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 4 ) {
-                    int [] exp_offsets_x = {0, -8, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                } else if (index == 4) {
+                    int[] exp_offsets_x = {0, -8, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 5 ) {
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                } else if (index == 5) {
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 6 ) {
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                } else if (index == 6) {
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 7 ) {
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                } else if (index == 7) {
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -15697,7 +15728,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 83, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg24".
+    /**
+     * Tests Avg algorithm on test samples "testAvg24".
      */
     public void testAvg24() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg24");
@@ -15709,7 +15741,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg24/input0.jpg");
         inputs.add(avg_images_path + "testAvg24/input1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg24_output.jpg", 100, 1000000000L/2421, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg24_output.jpg", 100, 1000000000L / 2421, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15724,7 +15756,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 56, 254);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg25".
+    /**
+     * Tests Avg algorithm on test samples "testAvg25".
      */
     public void testAvg25() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg25");
@@ -15738,7 +15771,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg25/input2.jpg");
         inputs.add(avg_images_path + "testAvg25/input3.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg25_output.jpg", 512, 1000000000L/20, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg25_output.jpg", 512, 1000000000L / 20, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15748,7 +15781,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg26".
+    /**
+     * Tests Avg algorithm on test samples "testAvg26".
      */
     public void testAvg26() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg26");
@@ -15764,28 +15798,25 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg26/input2.jpg");
         inputs.add(avg_images_path + "testAvg26/input3.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg26_output.jpg", 100, 1000000000L/365, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg26_output.jpg", 100, 1000000000L / 365, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
                 /*if( true )
                     return;*/
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 2) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, -4, 0};
+                } else if (index == 3) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, -4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -15794,7 +15825,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg27".
+    /**
+     * Tests Avg algorithm on test samples "testAvg27".
      */
     public void testAvg27() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg27");
@@ -15806,7 +15838,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg27/IMG_20180610_205929_0.jpg");
         inputs.add(avg_images_path + "testAvg27/IMG_20180610_205929_1.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg27_output.jpg", 100, 1000000000L/482, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg27_output.jpg", 100, 1000000000L / 482, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15816,7 +15848,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 1, 39, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg28".
+    /**
+     * Tests Avg algorithm on test samples "testAvg28".
      */
     public void testAvg28() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg28");
@@ -15837,7 +15870,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg28/input007.jpg");
         inputs.add(avg_images_path + "testAvg28/input008.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg28_output.jpg", 811, 1000000000L/21, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg28_output.jpg", 811, 1000000000L / 21, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15849,7 +15882,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 8, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg29".
+    /**
+     * Tests Avg algorithm on test samples "testAvg29".
      */
     public void testAvg29() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg29");
@@ -15871,7 +15905,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg29/input008.jpg");
         inputs.add(avg_images_path + "testAvg29/input009.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg29_output.jpg", 40, 1000000000L/2660, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg29_output.jpg", 40, 1000000000L / 2660, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15882,7 +15916,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 92, 134, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg30".
+    /**
+     * Tests Avg algorithm on test samples "testAvg30".
      */
     public void testAvg30() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg30");
@@ -15898,26 +15933,23 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg30/input002.jpg");
         inputs.add(avg_images_path + "testAvg30/input003.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg30_output.jpg", 60, 1000000000L/411, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg30_output.jpg", 60, 1000000000L / 411, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 2 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, -4, 0};
+                } else if (index == 2) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, -4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
-                    int [] exp_offsets_x = {0, 0, 0};
-                    int [] exp_offsets_y = {0, -4, 0};
+                } else if (index == 3) {
+                    int[] exp_offsets_x = {0, 0, 0};
+                    int[] exp_offsets_y = {0, -4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else {
+                } else {
                     fail();
                 }
             }
@@ -15928,7 +15960,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 107, 254);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg31".
+    /**
+     * Tests Avg algorithm on test samples "testAvg31".
      */
     public void testAvg31() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg31");
@@ -15951,7 +15984,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg31/input009.jpg");
         inputs.add(avg_images_path + "testAvg31/input010.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg31_output.jpg", 609, 1000000000L/25, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg31_output.jpg", 609, 1000000000L / 25, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15962,7 +15995,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 9, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg32".
+    /**
+     * Tests Avg algorithm on test samples "testAvg32".
      */
     public void testAvg32() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg32");
@@ -15982,7 +16016,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg32/input006.jpg");
         inputs.add(avg_images_path + "testAvg32/input007.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg32_output.jpg", 335, 1000000000L/120, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg32_output.jpg", 335, 1000000000L / 120, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -15994,7 +16028,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 36, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg33".
+    /**
+     * Tests Avg algorithm on test samples "testAvg33".
      */
     public void testAvg33() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg33");
@@ -16017,7 +16052,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg33/input009.jpg");
         inputs.add(avg_images_path + "testAvg33/input010.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg33_output.jpg", 948, 1000000000L/18, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg33_output.jpg", 948, 1000000000L / 18, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16028,7 +16063,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 63, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg34".
+    /**
+     * Tests Avg algorithm on test samples "testAvg34".
      */
     public void testAvg34() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg34");
@@ -16041,7 +16077,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg34/IMG_20180627_121959_1.jpg");
         inputs.add(avg_images_path + "testAvg34/IMG_20180627_121959_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg34_output.jpg", 100, 1000000000L/289, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg34_output.jpg", 100, 1000000000L / 289, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16054,7 +16090,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 103, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg35".
+    /**
+     * Tests Avg algorithm on test samples "testAvg35".
      */
     public void testAvg35() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg35");
@@ -16067,7 +16104,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg35/IMG_20180711_144453_1.jpg");
         inputs.add(avg_images_path + "testAvg35/IMG_20180711_144453_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg35_output.jpg", 100, 1000000000L/2549, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg35_output.jpg", 100, 1000000000L / 2549, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16078,7 +16115,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 169, 248);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg36".
+    /**
+     * Tests Avg algorithm on test samples "testAvg36".
      */
     public void testAvg36() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg36");
@@ -16097,18 +16135,17 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg36/IMG_20180709_114831_6.jpg");
         inputs.add(avg_images_path + "testAvg36/IMG_20180709_114831_7.jpg");*/
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg36_output.jpg", 752, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg36_output.jpg", 752, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, -12, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, -12, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
-                }
-                else if( index == 3 ) {
-                    int [] exp_offsets_x = {0, -28, 0};
-                    int [] exp_offsets_y = {0, 0, 0};
+                } else if (index == 3) {
+                    int[] exp_offsets_x = {0, -28, 0};
+                    int[] exp_offsets_y = {0, 0, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                 }
             }
@@ -16117,7 +16154,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 86, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg37".
+    /**
+     * Tests Avg algorithm on test samples "testAvg37".
      */
     public void testAvg37() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg37");
@@ -16131,7 +16169,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg37/IMG_20180715_173155_2.jpg");
         inputs.add(avg_images_path + "testAvg37/IMG_20180715_173155_3.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg37_output.jpg", 131, 1000000000L/50, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg37_output.jpg", 131, 1000000000L / 50, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16146,7 +16184,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 6, 94, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg38".
+    /**
+     * Tests Avg algorithm on test samples "testAvg38".
      */
     public void testAvg38() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg38");
@@ -16165,7 +16204,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg38/IMG_20180716_232102_7.jpg");
 
         // n.b., this was a zoomed in photo, but can't quite remember the exact zoom level!
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg38_output.jpg", 1505, 1000000000L/10, 3.95f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg38_output.jpg", 1505, 1000000000L / 10, 3.95f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16173,7 +16212,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         });
     }
 
-    /** Tests Avg algorithm on test samples "testAvg39".
+    /**
+     * Tests Avg algorithm on test samples "testAvg39".
      */
     public void testAvg39() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg39");
@@ -16196,7 +16236,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg39/input009.jpg");
         inputs.add(avg_images_path + "testAvg39/input010.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg39_output.jpg", 521, 1000000000L/27, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg39_output.jpg", 521, 1000000000L / 27, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16207,7 +16247,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 25, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg40".
+    /**
+     * Tests Avg algorithm on test samples "testAvg40".
      */
     public void testAvg40() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg40");
@@ -16229,7 +16270,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg40/input008.jpg");
         inputs.add(avg_images_path + "testAvg40/input009.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg40_output.jpg", 199, 1000000000L/120, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg40_output.jpg", 199, 1000000000L / 120, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16241,7 +16282,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 50, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg41".
+    /**
+     * Tests Avg algorithm on test samples "testAvg41".
      */
     public void testAvg41() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg41");
@@ -16264,7 +16306,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg41/input009.jpg");
         inputs.add(avg_images_path + "testAvg41/input010.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg41_output.jpg", 100, 1000000000L/869, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg41_output.jpg", 100, 1000000000L / 869, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16275,7 +16317,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 37, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg42".
+    /**
+     * Tests Avg algorithm on test samples "testAvg42".
      */
     public void testAvg42() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg42");
@@ -16288,7 +16331,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg42/IMG_20180822_145152_1.jpg");
         inputs.add(avg_images_path + "testAvg42/IMG_20180822_145152_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg42_output.jpg", 100, 1000000000L/2061, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg42_output.jpg", 100, 1000000000L / 2061, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16299,7 +16342,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 61, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg43".
+    /**
+     * Tests Avg algorithm on test samples "testAvg43".
      */
     public void testAvg43() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg43");
@@ -16312,7 +16356,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg43/IMG_20180831_143226_1.jpg");
         inputs.add(avg_images_path + "testAvg43/IMG_20180831_143226_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg43_output.jpg", 100, 1000000000L/2152, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg43_output.jpg", 100, 1000000000L / 2152, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16322,7 +16366,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 69, 253);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg44".
+    /**
+     * Tests Avg algorithm on test samples "testAvg44".
      */
     public void testAvg44() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg44");
@@ -16335,7 +16380,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg44/IMG_20180830_133917_1.jpg");
         inputs.add(avg_images_path + "testAvg44/IMG_20180830_133917_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg44_output.jpg", 40, 1000000000L/2130, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg44_output.jpg", 40, 1000000000L / 2130, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16345,7 +16390,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg45".
+    /**
+     * Tests Avg algorithm on test samples "testAvg45".
      */
     public void testAvg45() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg45");
@@ -16358,7 +16404,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg45/IMG_20180719_133947_1.jpg");
         inputs.add(avg_images_path + "testAvg45/IMG_20180719_133947_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg45_output.jpg", 100, 1000000000L/865, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg45_output.jpg", 100, 1000000000L / 865, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16368,7 +16414,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 75, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg46".
+    /**
+     * Tests Avg algorithm on test samples "testAvg46".
      */
     public void testAvg46() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg46");
@@ -16386,7 +16433,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg46/IMG_20180903_203141_6.jpg");
         inputs.add(avg_images_path + "testAvg46/IMG_20180903_203141_7.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg46_output.jpg", 1505, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg46_output.jpg", 1505, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16396,7 +16443,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 30, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg47".
+    /**
+     * Tests Avg algorithm on test samples "testAvg47".
      */
     public void testAvg47() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg47");
@@ -16410,7 +16458,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg47/IMG_20180911_114752_2.jpg");
         inputs.add(avg_images_path + "testAvg47/IMG_20180911_114752_3.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg47_output.jpg", 749, 1000000000L/12, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg47_output.jpg", 749, 1000000000L / 12, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16420,7 +16468,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 30, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg48".
+    /**
+     * Tests Avg algorithm on test samples "testAvg48".
      */
     public void testAvg48() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg48");
@@ -16438,7 +16487,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg48/IMG_20180911_110520_6.jpg");
         inputs.add(avg_images_path + "testAvg48/IMG_20180911_110520_7.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg48_output.jpg", 1196, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg48_output.jpg", 1196, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16448,7 +16497,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 30, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg49".
+    /**
+     * Tests Avg algorithm on test samples "testAvg49".
      */
     public void testAvg49() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg49");
@@ -16466,7 +16516,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg49/IMG_20180911_120200_6.jpg");
         inputs.add(avg_images_path + "testAvg49/IMG_20180911_120200_7.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg49_output.jpg", 1505, 1000000000L/10, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg49_output.jpg", 1505, 1000000000L / 10, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16476,7 +16526,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 30, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg50".
+    /**
+     * Tests Avg algorithm on test samples "testAvg50".
      */
     public void testAvg50() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg50");
@@ -16490,7 +16541,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg50/IMG_20181015_144335_2.jpg");
         inputs.add(avg_images_path + "testAvg50/IMG_20181015_144335_3.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg50_output.jpg", 114, 1000000000L/33, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg50_output.jpg", 114, 1000000000L / 33, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16500,7 +16551,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 91, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg51".
+    /**
+     * Tests Avg algorithm on test samples "testAvg51".
      */
     public void testAvg51() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg51");
@@ -16518,19 +16570,18 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg51/IMG_20181025_182917_6.jpg");
         inputs.add(avg_images_path + "testAvg51/IMG_20181025_182917_7.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg51_output.jpg", 1600, 1000000000L/3, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg51_output.jpg", 1600, 1000000000L / 3, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
-                if( index == 1 ) {
-                    int [] exp_offsets_x = {0, 8, 0};
-                    int [] exp_offsets_y = {0, 4, 0};
+                if (index == 1) {
+                    int[] exp_offsets_x = {0, 8, 0};
+                    int[] exp_offsets_y = {0, 4, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                     assertEquals(0, mActivity.getApplicationInterface().getHDRProcessor().sharp_index);
-                }
-                else if( index == 7 ) {
-                    int [] exp_offsets_x = {0, 60, 0};
-                    int [] exp_offsets_y = {0, 28, 0};
+                } else if (index == 7) {
+                    int[] exp_offsets_x = {0, 60, 0};
+                    int[] exp_offsets_y = {0, 28, 0};
                     checkHDROffsets(exp_offsets_x, exp_offsets_y, mActivity.getApplicationInterface().getHDRProcessor().getAvgSampleSize());
                 }
             }
@@ -16539,7 +16590,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 91, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvg52".
+    /**
+     * Tests Avg algorithm on test samples "testAvg52".
      */
     public void testAvg52() throws IOException, InterruptedException {
         Log.d(TAG, "testAvg52");
@@ -16552,7 +16604,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvg52/IMG_20181119_144836_1.jpg");
         inputs.add(avg_images_path + "testAvg52/IMG_20181119_144836_2.jpg");
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg52_output.jpg", 100, 1000000000L/297, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvg52_output.jpg", 100, 1000000000L / 297, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16562,9 +16614,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         //checkHistogramDetails(hdrHistogramDetails, 0, 91, 255);
     }
 
-    /** Tests Avg algorithm on test samples "testAvgtemp".
-     *  Used for one-off testing, or to recreate NR images from the base exposures to test an updated alorithm.
-     *  The test images should be copied to the test device into DCIM/testOpenCamera/testdata/hdrsamples/testAvgtemp/ .
+    /**
+     * Tests Avg algorithm on test samples "testAvgtemp".
+     * Used for one-off testing, or to recreate NR images from the base exposures to test an updated alorithm.
+     * The test images should be copied to the test device into DCIM/testOpenCamera/testdata/hdrsamples/testAvgtemp/ .
      */
     public void testAvgtemp() throws IOException, InterruptedException {
         Log.d(TAG, "testAvgtemp");
@@ -16583,7 +16636,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         inputs.add(avg_images_path + "testAvgtemp/input6.jpg");
         inputs.add(avg_images_path + "testAvgtemp/input7.jpg");*/
 
-        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvgtemp_output.jpg", 250, 1000000000L/33, 1.0f, new TestAvgCallback() {
+        HistogramDetails hdrHistogramDetails = subTestAvg(inputs, "testAvgtemp_output.jpg", 250, 1000000000L / 33, 1.0f, new TestAvgCallback() {
             @Override
             public void doneProcessAvg(int index) {
                 Log.d(TAG, "doneProcessAvg: " + index);
@@ -16594,31 +16647,31 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     }
 
     private int tonemapConvert(int in, TonemapCurve curve, int channel) {
-        float in_f = in/255.0f;
+        float in_f = in / 255.0f;
         float out_f = 0.0f;
         // first need to undo the gamma that's already been applied to the test input images (since the tonemap curve also reapplies gamma)
-        in_f = (float)Math.pow(in_f, 2.2f);
+        in_f = (float) Math.pow(in_f, 2.2f);
         boolean found = false;
-        for(int i=0;i<curve.getPointCount(channel)-1 && !found;i++) {
+        for (int i = 0; i < curve.getPointCount(channel) - 1 && !found; i++) {
             PointF p0 = curve.getPoint(channel, i);
-            PointF p1 = curve.getPoint(channel, i+1);
-            if( in_f >= p0.x && in_f <= p1.x ) {
+            PointF p1 = curve.getPoint(channel, i + 1);
+            if (in_f >= p0.x && in_f <= p1.x) {
                 found = true;
                 float alpha = (in_f - p0.x) / (p1.x - p0.x);
                 out_f = p0.y + alpha * (p1.y - p0.y);
             }
         }
-        if( !found ) {
+        if (!found) {
             Log.d(TAG, "failed to convert: " + in_f);
             throw new RuntimeException();
         }
-        return (int)(255.0f * out_f + 0.5f);
+        return (int) (255.0f * out_f + 0.5f);
     }
 
     private HistogramDetails subTestLogProfile(String image_path, String output_name) throws IOException, InterruptedException {
         Log.d(TAG, "subTestLogProfile");
 
-        if( !mPreview.usingCamera2API() ) {
+        if (!mPreview.usingCamera2API()) {
             Log.d(TAG, "test requires camera2 api");
             return null;
         }
@@ -16629,27 +16682,27 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
         Bitmap bitmap = getBitmapFromFile(image_path);
 
-        CameraController2 camera_controller2 = (CameraController2)mPreview.getCameraController();
+        CameraController2 camera_controller2 = (CameraController2) mPreview.getCameraController();
         TonemapCurve curve = camera_controller2.testGetTonemapCurve();
 
         // compute lookup tables for faster operation
-        int [][] tonemap_lut = new int[3][];
-        for(int channel=0;channel<3;channel++) {
+        int[][] tonemap_lut = new int[3][];
+        for (int channel = 0; channel < 3; channel++) {
             Log.d(TAG, "compute tonemap_lut: " + channel);
             tonemap_lut[channel] = new int[256];
-            for(int i=0;i<256;i++) {
+            for (int i = 0; i < 256; i++) {
                 tonemap_lut[channel][i] = tonemapConvert(i, curve, channel);
             }
         }
 
 
-        int [] buffer = new int[bitmap.getWidth()];
-        for(int y=0;y<bitmap.getHeight();y++) {
-            if( y % 100 == 0 ) {
+        int[] buffer = new int[bitmap.getWidth()];
+        for (int y = 0; y < bitmap.getHeight(); y++) {
+            if (y % 100 == 0) {
                 Log.d(TAG, "processing y = " + y + " / " + bitmap.getHeight());
             }
             bitmap.getPixels(buffer, 0, bitmap.getWidth(), 0, y, bitmap.getWidth(), 1);
-            for(int x=0;x<bitmap.getWidth();x++) {
+            for (int x = 0; x < bitmap.getWidth(); x++) {
                 //Log.d(TAG, "    processing x = " + x + " / " + bitmap.getWidth());
                 int color = buffer[x];
                 int r = Color.red(color);
@@ -16678,7 +16731,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         return hdrHistogramDetails;
     }
 
-    /** Tests video log profile algorithm on test samples in "testAvg1".
+    /**
+     * Tests video log profile algorithm on test samples in "testAvg1".
      */
     public void testLogProfile1() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile1");
@@ -16698,7 +16752,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 7, 253);
     }
 
-    /** Tests video log profile algorithm on test samples in "testAvg20".
+    /**
+     * Tests video log profile algorithm on test samples in "testAvg20".
      */
     public void testLogProfile2() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile2");
@@ -16718,7 +16773,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 41, 241);
     }
 
-    /** Tests video log profile algorithm on test samples in "testLogProfile3".
+    /**
+     * Tests video log profile algorithm on test samples in "testLogProfile3".
      */
     public void testLogProfile3() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile3");
@@ -16738,7 +16794,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 143, 255);
     }
 
-    /** Tests video log profile algorithm on test samples in "testAvg1".
+    /**
+     * Tests video log profile algorithm on test samples in "testAvg1".
      */
     public void testLogProfile1_extra_strong() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile1_extra_strong");
@@ -16758,7 +16815,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 13, 254);
     }
 
-    /** Tests video log profile algorithm on test samples in "testAvg20".
+    /**
+     * Tests video log profile algorithm on test samples in "testAvg20".
      */
     public void testLogProfile2_extra_strong() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile2_extra_strong");
@@ -16778,7 +16836,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         checkHistogramDetails(hdrHistogramDetails, 0, 66, 244);
     }
 
-    /** Tests video log profile algorithm on test samples in "testLogProfile3".
+    /**
+     * Tests video log profile algorithm on test samples in "testLogProfile3".
      */
     public void testLogProfile3_extra_strong() throws IOException, InterruptedException {
         Log.d(TAG, "testLogProfile3_extra_strong");
@@ -16808,8 +16867,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
     /**
      * @param panorama_pics_per_screen The value of panorama_pics_per_screen used when taking the input photos.
-     * @param camera_angle_x The value of preview.getViewAngleX(for_preview=false) (in degrees) when taking the input photos (on the device used).
-     * @param camera_angle_y The value of preview.getViewAngleY(for_preview=false) (in degrees) when taking the input photos (on the device used).
+     * @param camera_angle_x           The value of preview.getViewAngleX(for_preview=false) (in degrees) when taking the input photos (on the device used).
+     * @param camera_angle_y           The value of preview.getViewAngleY(for_preview=false) (in degrees) when taking the input photos (on the device used).
      */
     private void subTestPanorama(List<String> inputs, String output_name, String gyro_debug_info_filename, float panorama_pics_per_screen, float camera_angle_x, float camera_angle_y, float gyro_tol_degrees) throws IOException, InterruptedException {
         Log.d(TAG, "subTestPanorama");
@@ -16822,10 +16881,10 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         int bitmap_width = 0;
         int bitmap_height = 0;
         List<Bitmap> bitmaps = new ArrayList<>();
-        for(String input : inputs) {
+        for (String input : inputs) {
             Bitmap bitmap = getBitmapFromFile(input);
 
-            if( first ) {
+            if (first) {
                 bitmap_width = bitmap.getWidth();
                 bitmap_height = bitmap.getHeight();
                 Log.d(TAG, "bitmap_width: " + bitmap_width);
@@ -16833,8 +16892,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
 
                 final int max_height = 2080;
                 //final int max_height = 2079; // test non power of 2
-                if( bitmap_height > max_height ) {
-                    float scale = ((float)max_height) / ((float)bitmap_height);
+                if (bitmap_height > max_height) {
+                    float scale = ((float) max_height) / ((float) bitmap_height);
                     Log.d(TAG, "scale: " + scale);
                     scale_matrix = new Matrix();
                     scale_matrix.postScale(scale, scale);
@@ -16844,7 +16903,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             }
 
             // downscale
-            if( scale_matrix != null ) {
+            if (scale_matrix != null) {
                 Bitmap new_bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap_width, bitmap_height, scale_matrix, true);
                 bitmap.recycle();
                 bitmap = new_bitmap;
@@ -16888,8 +16947,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
             final boolean crop = true;
             //final boolean crop = false; // test
             panorama = mActivity.getApplicationInterface().getPanoramaProcessor().panorama(bitmaps, panorama_pics_per_screen, camera_angle_y, crop);
-        }
-        catch(PanoramaProcessorException e) {
+        } catch (PanoramaProcessorException e) {
             e.printStackTrace();
             fail();
         }
@@ -16901,56 +16959,57 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         final float black_factor = 0.9f;
         // top:
         int n_black = 0;
-        for(int i=0;i<panorama.getWidth();i++) {
+        for (int i = 0; i < panorama.getWidth(); i++) {
             int color = panorama.getPixel(i, 0);
-            if( ((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0 ) {
+            if (((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0) {
                 n_black++;
             }
         }
-        if( n_black >= panorama.getWidth()*black_factor ) {
+        if (n_black >= panorama.getWidth() * black_factor) {
             Log.e(TAG, "too many black pixels on top border: " + n_black);
             fail();
         }
         // bottom:
         n_black = 0;
-        for(int i=0;i<panorama.getWidth();i++) {
-            int color = panorama.getPixel(i, panorama.getHeight()-1);
-            if( ((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0 ) {
+        for (int i = 0; i < panorama.getWidth(); i++) {
+            int color = panorama.getPixel(i, panorama.getHeight() - 1);
+            if (((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0) {
                 n_black++;
             }
         }
-        if( n_black >= panorama.getWidth()*black_factor ) {
+        if (n_black >= panorama.getWidth() * black_factor) {
             Log.e(TAG, "too many black pixels on bottom border: " + n_black);
             fail();
         }
         // left:
         n_black = 0;
-        for(int i=0;i<panorama.getHeight();i++) {
+        for (int i = 0; i < panorama.getHeight(); i++) {
             int color = panorama.getPixel(0, i);
-            if( ((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0 ) {
+            if (((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0) {
                 n_black++;
             }
         }
-        if( n_black >= panorama.getHeight()*black_factor ) {
+        if (n_black >= panorama.getHeight() * black_factor) {
             Log.e(TAG, "too many black pixels on left border: " + n_black);
             fail();
         }
         // right:
         n_black = 0;
-        for(int i=0;i<panorama.getHeight();i++) {
-            int color = panorama.getPixel(panorama.getWidth()-1, i);
-            if( ((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0 ) {
+        for (int i = 0; i < panorama.getHeight(); i++) {
+            int color = panorama.getPixel(panorama.getWidth() - 1, i);
+            if (((color >> 16) & 0xff) == 0 && ((color >> 8) & 0xff) == 0 && ((color) & 0xff) == 0) {
                 n_black++;
             }
         }
-        if( n_black >= panorama.getHeight()*black_factor ) {
+        if (n_black >= panorama.getHeight() * black_factor) {
             Log.e(TAG, "too many black pixels on right border: " + n_black);
             fail();
         }
     }
 
-    /** Tests panorama algorithm on test samples "testPanoramaWhite".
-     *  This tests that auto-alignment fails gracefully if we can't find any matches.
+    /**
+     * Tests panorama algorithm on test samples "testPanoramaWhite".
+     * This tests that auto-alignment fails gracefully if we can't find any matches.
      */
     public void testPanoramaWhite() throws IOException, InterruptedException {
         Log.d(TAG, "testPanoramaWhite");
@@ -16970,7 +17029,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, null, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 2.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama1".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama1".
      */
     public void testPanorama1() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama1");
@@ -16988,13 +17048,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_y = 47.44656f;
         float panorama_pics_per_screen = 2.0f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (47.44656/49.56283);
+        panorama_pics_per_screen *= (47.44656 / 49.56283);
         String output_name = "testPanorama1_output.jpg";
 
         subTestPanorama(inputs, output_name, null, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 2.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama2".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama2".
      */
     public void testPanorama2() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama2");
@@ -17025,12 +17086,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, null, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 2.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama3".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama3".
      */
     public void testPanorama3() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama3");
@@ -17056,13 +17118,14 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, null, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama3", with panorama_pics_per_screen set
-     *  to 4.0.
+    /**
+     * Tests panorama algorithm on test samples "testPanorama3", with panorama_pics_per_screen set
+     * to 4.0.
      */
     public void testPanorama3_picsperscreen2() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama3_picsperscreen2");
@@ -17088,12 +17151,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, null, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama4".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama4".
      */
     public void testPanorama4() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama4");
@@ -17117,12 +17181,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama5".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama5".
      */
     public void testPanorama5() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama5");
@@ -17146,12 +17211,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama6".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama6".
      */
     public void testPanorama6() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama6");
@@ -17175,12 +17241,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama7".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama7".
      */
     public void testPanorama7() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama7");
@@ -17205,12 +17272,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama8".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama8".
      */
     public void testPanorama8() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama8");
@@ -17230,12 +17298,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/52.26029);
+        panorama_pics_per_screen *= (50.282097 / 52.26029);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama9".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama9".
      */
     public void testPanorama9() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama9");
@@ -17258,14 +17327,15 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/50.44399);
+        panorama_pics_per_screen *= (50.282097 / 50.44399);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
 
         Thread.sleep(1000); // need to wait for debug images to be saved/broadcast?
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama10".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama10".
      */
     public void testPanorama10() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama10");
@@ -17295,12 +17365,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/50.44399);
+        panorama_pics_per_screen *= (50.282097 / 50.44399);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama11".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama11".
      */
     public void testPanorama11() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama11");
@@ -17323,12 +17394,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/50.44399);
+        panorama_pics_per_screen *= (50.282097 / 50.44399);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama12".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama12".
      */
     public void testPanorama12() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama12");
@@ -17354,12 +17426,13 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_x = 66.708595f;
         float camera_angle_y = 50.282097f;
         // these images were taken with incorrect camera view angles, so we compensate in the test:
-        panorama_pics_per_screen *= (50.282097/50.44399);
+        panorama_pics_per_screen *= (50.282097 / 50.44399);
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama13".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama13".
      */
     public void testPanorama13() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama13");
@@ -17388,7 +17461,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama14".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama14".
      */
     public void testPanorama14() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama14");
@@ -17418,7 +17492,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama15".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama15".
      */
     public void testPanorama15() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama15");
@@ -17448,7 +17523,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama16".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama16".
      */
     public void testPanorama16() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama16");
@@ -17478,7 +17554,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama17".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama17".
      */
     public void testPanorama17() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama17");
@@ -17508,7 +17585,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama18".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama18".
      */
     public void testPanorama18() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama18");
@@ -17538,7 +17616,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama19".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama19".
      */
     public void testPanorama19() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama19");
@@ -17568,7 +17647,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama20".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama20".
      */
     public void testPanorama20() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama20");
@@ -17598,7 +17678,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama21".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama21".
      */
     public void testPanorama21() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama21");
@@ -17628,7 +17709,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 0.5f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama22".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama22".
      */
     public void testPanorama22() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama22");
@@ -17655,7 +17737,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama23".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama23".
      */
     public void testPanorama23() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama23");
@@ -17679,7 +17762,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama24".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama24".
      */
     public void testPanorama24() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama24");
@@ -17709,7 +17793,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama25".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama25".
      */
     public void testPanorama25() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama25");
@@ -17737,7 +17822,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama26".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama26".
      */
     public void testPanorama26() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama26");
@@ -17764,7 +17850,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama27".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama27".
      */
     public void testPanorama27() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama27");
@@ -17791,7 +17878,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama28".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama28".
      */
     public void testPanorama28() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama28");
@@ -17833,10 +17921,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama28", but with a nbnq similar set of
-     *  input images. Instead of converting the original JPEGs to PNG on Nokia 8, this was done on
-     *  the Samsung Galaxy S10e, which gives small differences, but enough to show up potential
-     *  stability issues.
+    /**
+     * Tests panorama algorithm on test samples "testPanorama28", but with a nbnq similar set of
+     * input images. Instead of converting the original JPEGs to PNG on Nokia 8, this was done on
+     * the Samsung Galaxy S10e, which gives small differences, but enough to show up potential
+     * stability issues.
      */
     public void testPanorama28_galaxys10e() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama28_galaxys10e");
@@ -17878,7 +17967,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama29".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama29".
      */
     public void testPanorama29() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama29");
@@ -17909,7 +17999,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama30".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama30".
      */
     public void testPanorama30() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama30");
@@ -17951,10 +18042,11 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama30", but with a nbnq similar set of
-     *  input images. Instead of converting the original JPEGs to PNG on Nokia 8, this was done on
-     *  the Samsung Galaxy S10e, which gives small differences, but enough to show up potential
-     *  stability issues.
+    /**
+     * Tests panorama algorithm on test samples "testPanorama30", but with a nbnq similar set of
+     * input images. Instead of converting the original JPEGs to PNG on Nokia 8, this was done on
+     * the Samsung Galaxy S10e, which gives small differences, but enough to show up potential
+     * stability issues.
      */
     public void testPanorama30_galaxys10e() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama30_galaxys10e");
@@ -17996,7 +18088,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama31".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama31".
      */
     public void testPanorama31() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama31");
@@ -18023,7 +18116,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama3".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama3".
      */
     public void testPanorama32() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama32");
@@ -18052,7 +18146,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama33".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama33".
      */
     public void testPanorama33() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama33");
@@ -18078,7 +18173,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama34".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama34".
      */
     public void testPanorama34() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama34");
@@ -18109,7 +18205,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama35".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama35".
      */
     public void testPanorama35() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama35");
@@ -18139,7 +18236,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama36".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama36".
      */
     public void testPanorama36() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama36");
@@ -18167,7 +18265,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama37".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama37".
      */
     public void testPanorama37() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama37");
@@ -18197,7 +18296,8 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
     }
 
-    /** Tests panorama algorithm on test samples "testPanorama38".
+    /**
+     * Tests panorama algorithm on test samples "testPanorama38".
      */
     public void testPanorama38() throws IOException, InterruptedException {
         Log.d(TAG, "testPanorama38");
@@ -18225,5 +18325,31 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         float camera_angle_y = 50.04736f;
 
         subTestPanorama(inputs, output_name, gyro_name, panorama_pics_per_screen, camera_angle_x, camera_angle_y, 1.0f);
+    }
+
+    private enum UriType {
+        MEDIASTORE_IMAGES,
+        MEDIASTORE_VIDEOS,
+        STORAGE_ACCESS_FRAMEWORK
+    }
+
+    private interface VideoTestCallback {
+        int doTest(); // return expected number of new files (or -1 to indicate not to check this)
+    }
+
+    private interface TestAvgCallback {
+        void doneProcessAvg(int index); // called after every call to HDRProcessor.processAvg()
+    }
+
+    private static class HistogramDetails {
+        final int min_value;
+        final int median_value;
+        final int max_value;
+
+        HistogramDetails(int min_value, int median_value, int max_value) {
+            this.min_value = min_value;
+            this.median_value = median_value;
+            this.max_value = max_value;
+        }
     }
 }

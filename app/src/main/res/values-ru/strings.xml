@@ -8,7 +8,7 @@
 
     <string name="on">Вкл</string>
     <string name="off">Выкл</string>
-    
+
     <string name="choose_save_location">Выберите папку для сохранения:</string>
     <string name="clear_folder_history">Очистить историю папки</string>
     <string name="clear_folder_history_question">Очистить историю папки?</string>
@@ -57,7 +57,7 @@
     <string name="color_effect">Цветовой эффект</string>
     <string name="scene_mode">Сцена</string>
     <string name="white_balance">Баланс белого</string>
-    
+
     <string name="angle">Угол</string>
     <string name="direction">Направление</string>
     <string name="failed_to_open_camera_1">Не удалось открыть камеру</string>
@@ -68,10 +68,10 @@
     <string name="free_memory">Память</string>
     <string name="screen_lock_message_1">[Заблокировано:</string>
     <string name="screen_lock_message_2">Проведите по экрану, чтобы разблокировать]</string>
-    
+
     <string name="failed_to_stamp">Не удалось добавить отметку</string>
     <string name="metres_abbreviation">м</string>
-    
+
     <string name="preference_category_camera_effects">Эффекты</string>
     <string name="preference_auto_stabilise">Автостабилизация</string>
     <string name="preference_auto_stabilise_summary">Изображение будет стабилизироваться. Не рекомендуется на слабых устройствах</string>
@@ -167,7 +167,7 @@
     <string name="preference_keep_display_on_summary">Если включено, экран не будет выключаться, пока Open Camera открыта</string>
     <string name="preference_max_brightness">Максимальная яркость</string>
     <string name="preference_max_brightness_summary">Включение максимальной яркости во время съемки</string>
-    
+
     <string name="preference_category_camera_quality">Качество фото и видео</string>
     <string name="preference_screen_photo_settings">Настройки фото…</string>
     <string name="preference_screen_video_settings">Настройки видео…</string>
@@ -222,7 +222,7 @@
     <string name="preference_record_audio_channels_summary">Настройка моно или стереозвука (стерео доступно не на всех устройствах)</string>
     <string name="preference_video_flash">Вспышка во время записи видео</string>
     <string name="preference_video_flash_summary">Если включено, вспышка будет включаться/выключаться при записи видео (можно использовать, чтобы выполнить запись на расстоянии)</string>
-    
+
     <string name="preference_category_online">Разное</string>
     <string name="preference_online_help">Помощь в Интернете</string>
     <string name="preference_online_help_summary">Открыть веб-сайт Open Camera в вашем браузере</string>
@@ -239,7 +239,7 @@
     <string name="about_available">Доступно</string>
     <string name="about_not_available">Недоступно</string>
     <string name="about_copy_to_clipboard">Копировать в буфер</string>
-    
+
     <string name="take_photo">Сделать фото</string>
     <string name="gallery">Галерея</string>
     <string name="exposure">Экспозиция</string>
@@ -252,7 +252,7 @@
     <string name="switch_to_photo">Переключиться в режим фото</string>
     <string name="trash">Удалить последний снимок</string>
     <string name="share">Поделиться</string>
-    
+
     <string name="parent_folder">Родительская папка</string>
     <string name="new_folder">Новая папка</string>
     <string name="cant_write_folder">Невозможно записать в эту папку</string>

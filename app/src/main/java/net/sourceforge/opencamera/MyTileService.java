@@ -3,15 +3,17 @@ package net.sourceforge.opencamera;
 import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
-import androidx.annotation.RequiresApi;
 import android.util.Log;
 
-/** Provides service for quick settings tile.
+import androidx.annotation.RequiresApi;
+
+/**
+ * Provides service for quick settings tile.
  */
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class MyTileService extends TileService {
-    private static final String TAG = "MyTileService";
     public static final String TILE_ID = "net.sourceforge.opencamera.TILE_CAMERA";
+    private static final String TAG = "MyTileService";
 
     @Override
     public void onDestroy() {
@@ -40,7 +42,7 @@ public class MyTileService extends TileService {
 
     @Override
     public void onClick() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onClick");
         super.onClick();
         Intent intent = new Intent(this, MainActivity.class);

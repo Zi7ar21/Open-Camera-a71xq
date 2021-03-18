@@ -252,7 +252,7 @@
         <item>noise</item>
         <item>voice</item>
     </string-array>
-	<string-array name="preference_save_zulu_time_entries">
+    <string-array name="preference_save_zulu_time_entries">
         <item>Krajevni čas</item>
         <item>UTC (Zulu)</item>
     </string-array>
@@ -280,7 +280,7 @@
         <item>2</item>
         <item>3</item>
     </string-array>
-	<string-array name="preference_front_camera_mirror_entries">
+    <string-array name="preference_front_camera_mirror_entries">
         <item>Brez zrcaljenja</item>
         <item>Zrcali fotografijo</item>
     </string-array>
@@ -288,7 +288,7 @@
         <item>preference_front_camera_mirror_no</item>
         <item>preference_front_camera_mirror_photo</item>
     </string-array>
-	<string-array name="preference_video_subtitle_entries">
+    <string-array name="preference_video_subtitle_entries">
         <item>Brez podnapisov</item>
         <item>Zapiši podnapise</item>
     </string-array>

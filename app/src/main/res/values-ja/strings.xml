@@ -8,7 +8,7 @@
 
     <string name="on">オン</string> <!-- whether a setting is turned on, e.g., "Auto-level: On" -->
     <string name="off">オフ</string> <!-- whether a setting is turned off, e.g., "Auto-level: Off" -->
-    
+
     <string name="choose_save_location">保存場所を選択する:</string>
     <string name="clear_folder_history">フォルダの履歴を消去する</string>
     <string name="clear_folder_history_question">履歴を消去しますか？</string>
@@ -57,7 +57,7 @@
     <string name="color_effect">カラーエフェクト</string>
     <string name="scene_mode">シーンモード</string>
     <string name="white_balance">ホワイトバランス</string>
-    
+
     <string name="angle">角度</string>
     <string name="direction">方角</string>
     <string name="failed_to_open_camera_1">カメラが開けません。</string>
@@ -68,10 +68,10 @@
     <string name="free_memory">空き</string>
     <string name="screen_lock_message_1">[固定:</string>
     <string name="screen_lock_message_2">スワイプで解除]</string>
-    
+
     <string name="failed_to_stamp">スタンプの貼り付けに失敗しました</string>
     <string name="metres_abbreviation">m</string> <!-- symbol short for metres -->
-    
+
     <string name="preference_category_camera_effects">カメラエフェクト</string>
     <string name="preference_auto_stabilise">傾き補正</string>
     <string name="preference_auto_stabilise_summary">水平を(写真のみ)自動的に修正します(撮影後の処理に時間がかかります。メモリの少ない端末では失敗する事があります)</string>
@@ -167,7 +167,7 @@
     <string name="preference_keep_display_on_summary">有効にすると使用している間は画面が消えなくなります</string>
     <string name="preference_max_brightness">明るさを常に最大にする</string>
     <string name="preference_max_brightness_summary">画面の明るさを常に最大にします</string>
-    
+
     <string name="preference_category_camera_quality">写真とビデオの設定…</string>
     <string name="preference_screen_photo_settings">写真の設定…</string>
     <string name="preference_screen_video_settings">ビデオの設定…</string>
@@ -220,7 +220,7 @@
     <string name="preference_record_audio_channels_summary">モノラルもしくはステレオを指定します (ステレオはサポートしている端末でのみ有効です)</string>
     <string name="preference_video_flash">録画中にライトを点滅する</string>
     <string name="preference_video_flash_summary">有効にすると撮影中にライトが点滅します (撮影中である事を相手に伝えることができます)</string>
-    
+
     <string name="preference_category_online">その他の内容</string>
     <string name="preference_online_help">オンラインヘルプ</string>
     <string name="preference_online_help_summary">Open Camera のWEBサイトをブラウザで開きます</string>
@@ -237,7 +237,7 @@
     <string name="about_available">利用可能</string>
     <string name="about_not_available">利用不可</string>
     <string name="about_copy_to_clipboard">クリップボードにコピーする</string>
-    
+
     <string name="take_photo">写真を撮影する</string>
     <string name="gallery">ギャラリーを開く</string>
     <string name="exposure">露出を設定する</string>
@@ -250,7 +250,7 @@
     <string name="switch_to_photo">写真モードに切り替える</string>
     <string name="trash">さっきの写真を削除する</string>
     <string name="share">この写真を共有する</string>
-    
+
     <string name="parent_folder">親フォルダ</string>
     <string name="new_folder">新規フォルダを作る</string>
     <string name="cant_write_folder">このフォルダは使えません</string>

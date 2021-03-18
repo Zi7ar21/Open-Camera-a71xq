@@ -15,7 +15,7 @@ class KrakenGattAttributes {
     //static final UUID KRAKEN_SENSORS_SERVICE = UUID.fromString("00001623-1212-efde-1523-785feabcd123");
     static final UUID KRAKEN_SENSORS_CHARACTERISTIC = UUID.fromString("00001625-1212-efde-1523-785feabcd123");
     //static final UUID KRAKEN_BUTTONS_SERVICE= UUID.fromString("00001523-1212-efde-1523-785feabcd123");
-    static final UUID KRAKEN_BUTTONS_CHARACTERISTIC= UUID.fromString("00001524-1212-efde-1523-785feabcd123");
+    static final UUID KRAKEN_BUTTONS_CHARACTERISTIC = UUID.fromString("00001524-1212-efde-1523-785feabcd123");
     //static final UUID BATTERY_SERVICE = UUID.fromString("180f");
     //static final UUID BATTERY_LEVEL = UUID.fromString("2a19");
 

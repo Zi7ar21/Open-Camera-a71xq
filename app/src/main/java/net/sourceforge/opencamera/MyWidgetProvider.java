@@ -1,9 +1,5 @@
 package net.sourceforge.opencamera;
 
-import net.sourceforge.opencamera.MyDebug;
-import net.sourceforge.opencamera.MainActivity;
-import net.sourceforge.opencamera.R;
-
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -12,23 +8,24 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-/** Handles the Open Camera lock screen widget. Lock screen widgets are no
- *  longer supported in Android 5 onwards (instead Open Camera can be launched
- *  from the lock screen using the standard camera icon), but this is kept here
- *  for older Android versions.
+/**
+ * Handles the Open Camera lock screen widget. Lock screen widgets are no
+ * longer supported in Android 5 onwards (instead Open Camera can be launched
+ * from the lock screen using the standard camera icon), but this is kept here
+ * for older Android versions.
  */
 public class MyWidgetProvider extends AppWidgetProvider {
     private static final String TAG = "MyWidgetProvider";
-    
+
     // see http://developer.android.com/guide/topics/appwidgets/index.html
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int [] appWidgetIds) {
-        if( MyDebug.LOG )
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        if (MyDebug.LOG)
             Log.d(TAG, "onUpdate");
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "length = " + appWidgetIds.length);
 
-        for(int appWidgetId : appWidgetIds) {
-            if( MyDebug.LOG )
+        for (int appWidgetId : appWidgetIds) {
+            if (MyDebug.LOG)
                 Log.d(TAG, "appWidgetId: " + appWidgetId);
 
             PendingIntent pendingIntent;
@@ -41,7 +38,8 @@ public class MyWidgetProvider extends AppWidgetProvider {
                 intent.setAction("net.sourceforge.opencamera.LAUNCH_OPEN_CAMERA");
                 pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
             }
-            else*/ {
+            else*/
+            {
                 /*if( MyDebug.LOG )
                     Log.d(TAG, "don't show above lock screen");*/
                 Intent intent = new Intent(context, MainActivity.class);

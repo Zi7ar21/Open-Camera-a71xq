@@ -72,7 +72,7 @@
         <item>Nincs</item>
         <item>Egy érintés</item>
         <item>Dupla érintés</item>
-        </string-array>
+    </string-array>
     <string-array name="preference_touch_capture_values">
         <item>none</item>
         <item>single</item>
@@ -99,7 +99,7 @@
     <string-array name="preference_rotate_preview_entries">
         <item>Ne forgassa</item>
         <item>Forgatás 180 fokkal</item>
-        </string-array>
+    </string-array>
     <string-array name="preference_rotate_preview_values">
         <item>0</item>
         <item>180</item>

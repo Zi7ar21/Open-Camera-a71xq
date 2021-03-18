@@ -16,10 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +26,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import net.sourceforge.opencamera.MyDebug;
 import net.sourceforge.opencamera.PreferenceKeys;
 import net.sourceforge.opencamera.R;
@@ -39,14 +40,25 @@ import java.util.ArrayList;
 @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class DeviceScanner extends ListActivity {
     private static final String TAG = "OC-BLEScanner";
+    private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_LOCATION_PERMISSIONS = 2;
     private LeDeviceListAdapter leDeviceListAdapter;
+    private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+        @Override
+        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    leDeviceListAdapter.addDevice(device);
+                    leDeviceListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
     private BluetoothAdapter bluetoothAdapter;
     private boolean is_scanning;
     private Handler bluetoothHandler;
     private SharedPreferences mSharedPreferences;
-
-    private static final int REQUEST_ENABLE_BT = 1;
-    private static final int REQUEST_LOCATION_PERMISSIONS = 2;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,7 +66,7 @@ public class DeviceScanner extends ListActivity {
         setContentView(R.layout.activity_device_select);
         bluetoothHandler = new Handler();
 
-        if( !getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE) ) {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -62,7 +74,7 @@ public class DeviceScanner extends ListActivity {
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
 
-        if( bluetoothAdapter == null ) {
+        if (bluetoothAdapter == null) {
             Toast.makeText(this, R.string.bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -78,7 +90,7 @@ public class DeviceScanner extends ListActivity {
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.getApplicationContext());
         String preference_remote_device_name = PreferenceKeys.RemoteName;
         String remote_name = mSharedPreferences.getString(preference_remote_device_name, "none");
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "preference_remote_device_name: " + remote_name);
 
         TextView currentRemote = findViewById(R.id.currentRemote);
@@ -88,10 +100,10 @@ public class DeviceScanner extends ListActivity {
 
     private void startScanning() {
 
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "Start scanning");
 
-        if( !bluetoothAdapter.isEnabled() ) {
+        if (!bluetoothAdapter.isEnabled()) {
             // fire an intent to display a dialog asking the user to grant permission to enable Bluetooth
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
@@ -110,16 +122,15 @@ public class DeviceScanner extends ListActivity {
                         .checkSelfPermission(this, permission_needed) :
                 PackageManager.PERMISSION_GRANTED;
 
-        if( permissionCoarse == PackageManager.PERMISSION_GRANTED ) {
+        if (permissionCoarse == PackageManager.PERMISSION_GRANTED) {
             scanLeDevice(true);
-        }
-        else {
+        } else {
             askForLocationPermission();
         }
     }
 
     private void askForLocationPermission() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "askForLocationPermission");
         // n.b., we only need ACCESS_COARSE_LOCATION, but it's simpler to request both to be consistent with Open Camera's
         // location permission requests in PermissionHandler. If we only request ACCESS_COARSE_LOCATION here, and later the
@@ -130,16 +141,15 @@ public class DeviceScanner extends ListActivity {
         // explicitly in the AndroidManifest.xml, otherwise the dialog to request permission is never shown (and the permission
         // is denied automatically).
         // Update: on Android 10+, ACCESS_FINE_LOCATION is needed anyway: https://developer.android.com/about/versions/10/privacy/changes#location-telephony-bluetooth-wifi
-        if( ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) ||
-                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION) ) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION) ||
+                ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)) {
             // Show an explanation to the user *asynchronously* -- don't block
             // this thread waiting for the user's response! After the user
             // sees the explanation, try again to request the permission.
             showRequestLocationPermissionRationale();
-        }
-        else {
+        } else {
             // Can go ahead and request the permission
-            if( MyDebug.LOG )
+            if (MyDebug.LOG)
                 Log.d(TAG, "requesting location permissions...");
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
@@ -148,18 +158,18 @@ public class DeviceScanner extends ListActivity {
     }
 
     private void showRequestLocationPermissionRationale() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "showRequestLocationPermissionRationale");
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.M ) {
-            if( MyDebug.LOG )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            if (MyDebug.LOG)
                 Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
             return;
         }
 
-        String [] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
+        String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
         int message_id = R.string.permission_rationale_location;
 
-        final String [] permissions_f = permissions;
+        final String[] permissions_f = permissions;
         new AlertDialog.Builder(this)
                 .setTitle(R.string.permission_rationale_title)
                 .setMessage(message_id)
@@ -167,7 +177,7 @@ public class DeviceScanner extends ListActivity {
                 .setPositiveButton(android.R.string.ok, null)
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     public void onDismiss(DialogInterface dialog) {
-                        if( MyDebug.LOG )
+                        if (MyDebug.LOG)
                             Log.d(TAG, "requesting permission...");
                         ActivityCompat.requestPermissions(DeviceScanner.this, permissions_f, REQUEST_LOCATION_PERMISSIONS);
                     }
@@ -177,18 +187,17 @@ public class DeviceScanner extends ListActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onRequestPermissionsResult: requestCode " + requestCode);
         //noinspection SwitchStatementWithTooFewBranches
         switch (requestCode) {
             case REQUEST_LOCATION_PERMISSIONS: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if( MyDebug.LOG )
+                    if (MyDebug.LOG)
                         Log.d(TAG, "location permission granted");
                     scanLeDevice(true);
-                }
-                else {
-                    if( MyDebug.LOG )
+                } else {
+                    if (MyDebug.LOG)
                         Log.d(TAG, "location permission denied");
                 }
             }
@@ -197,10 +206,10 @@ public class DeviceScanner extends ListActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onActivityResult");
         // user decided to cancel the enabling of Bluetooth, so exit
-        if( requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED ) {
+        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
             finish();
             return;
         }
@@ -209,10 +218,10 @@ public class DeviceScanner extends ListActivity {
 
     @Override
     protected void onPause() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onPause");
         super.onPause();
-        if( is_scanning ) {
+        if (is_scanning) {
             scanLeDevice(false);
             leDeviceListAdapter.clear();
         }
@@ -220,12 +229,12 @@ public class DeviceScanner extends ListActivity {
 
     @Override
     protected void onStop() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onStop");
         super.onStop();
 
         // we do this in onPause, but done here again just to be certain!
-        if( is_scanning ) {
+        if (is_scanning) {
             scanLeDevice(false);
             leDeviceListAdapter.clear();
         }
@@ -233,11 +242,11 @@ public class DeviceScanner extends ListActivity {
 
     @Override
     protected void onDestroy() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onDestroy");
 
         // we do this in onPause, but done here again just to be certain!
-        if( is_scanning ) {
+        if (is_scanning) {
             scanLeDevice(false);
             leDeviceListAdapter.clear();
         }
@@ -248,9 +257,9 @@ public class DeviceScanner extends ListActivity {
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         final BluetoothDevice device = leDeviceListAdapter.getDevice(position);
-        if( device == null )
+        if (device == null)
             return;
-        if( MyDebug.LOG ) {
+        if (MyDebug.LOG) {
             Log.d(TAG, "onListItemClick");
             Log.d(TAG, device.getAddress());
         }
@@ -263,14 +272,14 @@ public class DeviceScanner extends ListActivity {
     }
 
     private void scanLeDevice(final boolean enable) {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "scanLeDevice: " + enable);
-        if( enable ) {
+        if (enable) {
             // stop scanning after certain time
             bluetoothHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if( MyDebug.LOG )
+                    if (MyDebug.LOG)
                         Log.d(TAG, "stop scanning after delay");
                     is_scanning = false;
                     bluetoothAdapter.stopLeScan(mLeScanCallback);
@@ -280,12 +289,16 @@ public class DeviceScanner extends ListActivity {
 
             is_scanning = true;
             bluetoothAdapter.startLeScan(mLeScanCallback);
-        }
-        else {
+        } else {
             is_scanning = false;
             bluetoothAdapter.stopLeScan(mLeScanCallback);
         }
         invalidateOptionsMenu();
+    }
+
+    static class ViewHolder {
+        TextView deviceName;
+        TextView deviceAddress;
     }
 
     private class LeDeviceListAdapter extends BaseAdapter {
@@ -299,7 +312,7 @@ public class DeviceScanner extends ListActivity {
         }
 
         void addDevice(BluetoothDevice device) {
-            if( !mLeDevices.contains(device) ) {
+            if (!mLeDevices.contains(device)) {
                 mLeDevices.add(device);
             }
         }
@@ -330,20 +343,19 @@ public class DeviceScanner extends ListActivity {
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             ViewHolder viewHolder;
-            if( view == null ) {
+            if (view == null) {
                 view = mInflator.inflate(R.layout.listitem_device, null);
                 viewHolder = new ViewHolder();
                 viewHolder.deviceAddress = view.findViewById(R.id.device_address);
                 viewHolder.deviceName = view.findViewById(R.id.device_name);
                 view.setTag(viewHolder);
-            }
-            else {
+            } else {
                 viewHolder = (ViewHolder) view.getTag();
             }
 
             BluetoothDevice device = mLeDevices.get(i);
             final String deviceName = device.getName();
-            if( deviceName != null && deviceName.length() > 0 )
+            if (deviceName != null && deviceName.length() > 0)
                 viewHolder.deviceName.setText(deviceName);
             else
                 viewHolder.deviceName.setText(R.string.unknown_device);
@@ -351,23 +363,5 @@ public class DeviceScanner extends ListActivity {
 
             return view;
         }
-    }
-
-    private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-        @Override
-        public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    leDeviceListAdapter.addDevice(device);
-                    leDeviceListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-    };
-
-    static class ViewHolder {
-        TextView deviceName;
-        TextView deviceAddress;
     }
 }

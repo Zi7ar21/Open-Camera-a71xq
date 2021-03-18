@@ -8,7 +8,7 @@
 
     <string name="on">Encendido</string> <!-- whether a setting is turned on, e.g., "Auto-level: On" -->
     <string name="off">Apagado</string> <!-- whether a setting is turned off, e.g., "Auto-level: Off" -->
-    
+
     <string name="choose_save_location">Guardar en:</string>
     <string name="clear_folder_history">Limpiar historial de carpetas</string>
     <string name="clear_folder_history_question">Desea limpiar el historial de carpetas?</string>
@@ -57,7 +57,7 @@
     <string name="color_effect">Efecto de color</string>
     <string name="scene_mode">Modo de escena</string>
     <string name="white_balance">Balance de blancos</string>
-    
+
     <string name="angle">Ángulo</string>
     <string name="direction">Dirección</string>
     <string name="failed_to_open_camera_1">FALLO AL ABRIR CÁMARA.</string>
@@ -71,7 +71,7 @@
 
     <string name="failed_to_stamp">Error en el estampado de la información</string>
     <string name="metres_abbreviation">m</string> <!-- symbol short for metres -->
-    
+
     <string name="preference_category_camera_effects">Efectos de cámara</string>
     <string name="preference_auto_stabilise">Nivel automático</string>
     <string name="preference_auto_stabilise_summary">Las Imágenes serán rotadas automáticamente para que esten niveladas perfectamente (sólo fotos) (la toma de fotos es mas lenta y puede que falle en dispositivos con poca memoria)</string>
@@ -166,7 +166,7 @@
     <string name="preference_keep_display_on_summary">Si se activa, la pantalla no se apagará mientras la interfaz de usuario principal de Open Camera esté activa</string>
     <string name="preference_max_brightness">Forzar brillo al máximo</string>
     <string name="preference_max_brightness_summary">Forzar la visualización de la pantalla a tener el brillo máximo, en lugar del valor predeterminado del dispositivo</string>
-    
+
     <string name="preference_category_camera_quality">Configuración de fotos y videos</string>
     <string name="preference_screen_photo_settings">Configuración de fotos…</string>
     <string name="preference_screen_video_settings">Configuración de videos…</string>
@@ -221,7 +221,7 @@
     <string name="preference_record_audio_channels_summary">Especifique mono o estéreo para grabar audio (estéreo sólo es admitido en algunos dispositivos)</string>
     <string name="preference_video_flash">Flash durante la grabación de video</string>
     <string name="preference_video_flash_summary">Si está activado, el flash se activará/desactivará al grabar video (se puede utilizar para indicar que la cámara sigue grabando a distancia)</string>
-    
+
     <string name="preference_category_online">Varios</string>
     <string name="preference_online_help">Ayuda en línea</string>
     <string name="preference_online_help_summary">Inicie el sitio web de Open Camera en su navegador</string>
@@ -238,7 +238,7 @@
     <string name="about_available">Disponible</string>
     <string name="about_not_available">No disponible</string>
     <string name="about_copy_to_clipboard">Copiar al portapapeles</string>
-    
+
     <string name="take_photo">Tomar Foto</string>
     <string name="gallery">Galería</string>
     <string name="exposure">Exposición</string>
@@ -251,7 +251,7 @@
     <string name="switch_to_photo">Cambiar al modo de foto</string>
     <string name="trash">Borrar última foto</string>
     <string name="share">Compartir Foto</string>
-    
+
     <string name="parent_folder">Subir Carpeta</string>
     <string name="new_folder">Nueva Carpeta</string>
     <string name="cant_write_folder">No se puede escribir en esta carpeta</string>
@@ -262,7 +262,7 @@
 
     <string name="saf_select_save_location">Selecciona el lugar de guardado</string>
     <string name="saf_cancelled">Framework de Almacenamiento de Acceso cancelado</string>
-	<string name="saf_permission_failed">No se puede guardar en esta carpeta</string>
+    <string name="saf_permission_failed">No se puede guardar en esta carpeta</string>
 
     <!-- the permission names such as Microphone should match what Android calls them in the App permission settings -->
     <string name="permission_record_audio_not_available">El permiso de micrófono no está disponible</string>

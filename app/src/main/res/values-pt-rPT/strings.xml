@@ -8,7 +8,7 @@
 
     <string name="on">Ativar</string> <!-- whether a setting is turned on, e.g., "Auto-stabilise: On" -->
     <string name="off">Desativar</string> <!-- whether a setting is turned off, e.g., "Auto-stabilise: Off" -->
-    
+
     <string name="choose_save_location">Escolher o local para armazenamento:</string>
     <string name="clear_folder_history">Limpar o histórico de pastas</string>
     <string name="clear_folder_history_question">Limpar o histórico de pastas?</string>
@@ -57,7 +57,7 @@
     <string name="color_effect">Efeito de cor</string>
     <string name="scene_mode">Modo de cena</string>
     <string name="white_balance">Equilíbrio de brancos</string>
-    
+
     <string name="angle">Ângulo</string>
     <string name="direction">Direção</string>
     <string name="failed_to_open_camera_1">FALHA AO ABRIR A CÂMARA.</string>
@@ -68,10 +68,10 @@
     <string name="free_memory">Livre</string>
     <string name="screen_lock_message_1">[Bloqueado:</string>
     <string name="screen_lock_message_2">Deslize para desbloquear]</string>
-    
+
     <string name="failed_to_stamp">Falha ao carimbar informação na fotografia</string>
     <string name="metres_abbreviation">m</string> <!-- symbol short for metres -->
-    
+
     <string name="preference_category_camera_effects">Efeitos da câmara</string>
     <string name="preference_auto_stabilise">Auto-estabilizar</string>
     <string name="preference_auto_stabilise_summary">As imagens serão rodadas para serem niveladas automaticamente (apenas fotografias) (mais lento a tirar fotografias, e pode falhar em dispositivos com muito pouca memória)</string>
@@ -166,7 +166,7 @@
     <string name="preference_keep_display_on_summary">Se ativado, o ecrã não será desligado se a interface principal do Open Camera estiver ativa</string>
     <string name="preference_max_brightness">Forçar brilho máximo</string>
     <string name="preference_max_brightness_summary">Forçar o ecrã a estar com o brilho máximo, em vez da predefinição do dispositivo</string>
-    
+
     <string name="preference_category_camera_quality">Definições de fotografia e vídeo</string>
     <string name="preference_screen_photo_settings">Definições de fotografia…</string>
     <string name="preference_screen_video_settings">Definições de vídeo…</string>
@@ -221,7 +221,7 @@
     <string name="preference_record_audio_channels_summary">Especificar mono ou estéreo para a gravação de áudio (estéreo apenas é suportado em alguns dispositivos)</string>
     <string name="preference_video_flash">Flash durante a gravação de vídeo</string>
     <string name="preference_video_flash_summary">Se ativado, o flash será ligado/desligado durante a gravação de vídeo (pode ser usado para verificar à distância se câmara ainda está a gravar)</string>
-    
+
     <string name="preference_category_online">Diversos</string>
     <string name="preference_online_help">Ajuda online</string>
     <string name="preference_online_help_summary">Abrir o website do Open Camera no seu navegador</string>
@@ -238,7 +238,7 @@
     <string name="about_available">Disponível</string>
     <string name="about_not_available">Não disponível</string>
     <string name="about_copy_to_clipboard">Copiar para a área de transferência</string>
-    
+
     <string name="take_photo">Tirar fotografia</string>
     <string name="gallery">Galeria</string>
     <string name="exposure">Exposição</string>
@@ -251,7 +251,7 @@
     <string name="switch_to_photo">Mudar para o modo fotografia</string>
     <string name="trash">Eliminar a última fotografia</string>
     <string name="share">Partilhar fotografia</string>
-    
+
     <string name="parent_folder">Pasta superior</string>
     <string name="new_folder">Nova pasta</string>
     <string name="cant_write_folder">Não é possível escrever nesta pasta</string>
@@ -262,7 +262,7 @@
 
     <string name="saf_select_save_location">Selecionar o local para armazenamento</string>
     <string name="saf_cancelled">Storage Access Framework cancelado</string>
-    
+
     <!-- the permission names such as Microphone should match what Android calls them in the App permission settings -->
     <string name="permission_record_audio_not_available">A permissão de microfone não está disponível</string>
     <string name="permission_location_not_available">A permissão de localização não está disponível</string>
@@ -272,7 +272,7 @@
 
     <string name="max_filesize">Tamanho máximo do ficheiro</string>
     <string name="mb_abbreviation">MB</string> <!-- symbol short for megabytes -->
-    
+
     <string name="audio_control_start">Iniciar escuta de áudio</string>
     <string name="audio_control_stop">Parar escuta de áudio</string>
     <string name="speech_recognizer_started">Diga \"cheese\"</string>

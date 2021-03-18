@@ -17,7 +17,7 @@ public class MainTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testLocationSettings"));
         // other tests:
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testScopedStorageChecks1"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testScopedStorageChecks2"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testScopedStorageChecks3"));
         }
@@ -25,7 +25,7 @@ public class MainTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testPause"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testImmediatelyQuit"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testStartCameraPreviewCount"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testCamera2PrefUpgrade"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSaveModes"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFlashVideoMode"));
@@ -47,7 +47,7 @@ public class MainTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSwitchResolution"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFaceDetection"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFocusFlashAvailability"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFocusSwitchVideoSwitchCameras"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFocusRemainMacroSwitchCamera"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFocusRemainMacroSwitchPhoto"));
@@ -63,12 +63,12 @@ public class MainTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testZoom"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testZoomIdle"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testZoomSwitchCamera"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSwitchCameraIdle"));
         }
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSwitchCameraRepeat"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testTouchFocusQuick"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testGallery"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSettings"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSettingsSaveLoad"));
@@ -83,19 +83,19 @@ public class MainTests {
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testLayoutNoLimitsStartup"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testCameraModes"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testFailOpenCamera"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testAudioControlIcon"));
         }
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testIconsAgainstCameras"));
         suite.addTest(TestSuite.createTest(MainActivityTest.class, "testOnError"));
-        if( !MainActivityTest.test_camera2 ) {
+        if (!MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testGPSString"));
         }
-        if( MainActivityTest.test_camera2 ) {
+        if (MainActivityTest.test_camera2) {
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testPreviewBitmap"));
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testVideoFPSHighSpeed"));
         }
-        if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // intensive test, can crash when run as suite on older devices (Nexus 6, Nexus 7) with Camera2 at least
             // also run this test last, just in case
             suite.addTest(TestSuite.createTest(MainActivityTest.class, "testSwitchCameraRepeat2"));

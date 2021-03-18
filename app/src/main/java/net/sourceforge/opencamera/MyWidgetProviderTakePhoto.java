@@ -8,21 +8,22 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-/** Handles the Open Camera "take photo" widget. This widget launches Open
- *  Camera, and immediately takes a photo.
+/**
+ * Handles the Open Camera "take photo" widget. This widget launches Open
+ * Camera, and immediately takes a photo.
  */
 public class MyWidgetProviderTakePhoto extends AppWidgetProvider {
     private static final String TAG = "MyWidgetProviderTakePho";
-    
+
     // see http://developer.android.com/guide/topics/appwidgets/index.html
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int [] appWidgetIds) {
-        if( MyDebug.LOG )
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        if (MyDebug.LOG)
             Log.d(TAG, "onUpdate");
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "length = " + appWidgetIds.length);
 
-        for(int appWidgetId : appWidgetIds) {
-            if( MyDebug.LOG )
+        for (int appWidgetId : appWidgetIds) {
+            if (MyDebug.LOG)
                 Log.d(TAG, "appWidgetId: " + appWidgetId);
 
             Intent intent = new Intent(context, TakePhoto.class);

@@ -1,6 +1,7 @@
 package net.sourceforge.opencamera;
 
-/** Exception for PanoramaProcessor class.
+/**
+ * Exception for PanoramaProcessor class.
  */
 @SuppressWarnings("WeakerAccess")
 public class PanoramaProcessorException extends Exception {

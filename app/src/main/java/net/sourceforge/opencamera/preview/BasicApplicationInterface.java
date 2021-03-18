@@ -1,8 +1,5 @@
 package net.sourceforge.opencamera.preview;
 
-import java.util.Date;
-import java.util.List;
-
 import android.graphics.Canvas;
 import android.location.Location;
 import android.net.Uri;
@@ -12,12 +9,16 @@ import android.view.MotionEvent;
 import net.sourceforge.opencamera.cameracontroller.CameraController;
 import net.sourceforge.opencamera.cameracontroller.RawImage;
 
-/** A partial implementation of ApplicationInterface that provides "default" implementations. So
- *  sub-classing this is easier than implementing ApplicationInterface directly - you only have to
- *  provide the unimplemented methods to get started, and can later override
- *  BasicApplicationInterface's methods as required.
- *  Note there is no need for your subclass of BasicApplicationInterface to call "super" methods -
- *  these are just default implementations that should be overridden as required.
+import java.util.Date;
+import java.util.List;
+
+/**
+ * A partial implementation of ApplicationInterface that provides "default" implementations. So
+ * sub-classing this is easier than implementing ApplicationInterface directly - you only have to
+ * provide the unimplemented methods to get started, and can later override
+ * BasicApplicationInterface's methods as required.
+ * Note there is no need for your subclass of BasicApplicationInterface to call "super" methods -
+ * these are just default implementations that should be overridden as required.
  */
 public abstract class BasicApplicationInterface implements ApplicationInterface {
     @Override
@@ -31,8 +32,18 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
+    public void setCameraIdPref(int cameraId) {
+
+    }
+
+    @Override
     public String getFlashPref() {
         return "flash_off";
+    }
+
+    @Override
+    public void setFlashPref(String flash_value) {
+
     }
 
     @Override
@@ -46,8 +57,18 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
+    public void setVideoPref(boolean is_video) {
+
+    }
+
+    @Override
     public String getSceneModePref() {
         return CameraController.SCENE_MODE_DEFAULT;
+    }
+
+    @Override
+    public void setSceneModePref(String scene_mode) {
+
     }
 
     @Override
@@ -56,13 +77,28 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
+    public void setColorEffectPref(String color_effect) {
+
+    }
+
+    @Override
     public String getWhiteBalancePref() {
         return CameraController.WHITE_BALANCE_DEFAULT;
     }
 
     @Override
+    public void setWhiteBalancePref(String white_balance) {
+
+    }
+
+    @Override
     public int getWhiteBalanceTemperaturePref() {
         return 0;
+    }
+
+    @Override
+    public void setWhiteBalanceTemperaturePref(int white_balance_temperature) {
+
     }
 
     @Override
@@ -86,8 +122,18 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
+    public void setISOPref(String iso) {
+
+    }
+
+    @Override
     public int getExposureCompensationPref() {
         return 0;
+    }
+
+    @Override
+    public void setExposureCompensationPref(int exposure) {
+
     }
 
     @Override
@@ -108,6 +154,11 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     @Override
     public String getVideoQualityPref() {
         return "";
+    }
+
+    @Override
+    public void setVideoQualityPref(String video_quality) {
+
     }
 
     @Override
@@ -274,6 +325,11 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
+    public void setZoomPref(int zoom) {
+
+    }
+
+    @Override
     public double getCalibratedLevelAngle() {
         return 0;
     }
@@ -291,6 +347,11 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     @Override
     public long getExposureTimePref() {
         return CameraController.EXPOSURE_TIME_DEFAULT;
+    }
+
+    @Override
+    public void setExposureTimePref(long exposure_time) {
+
     }
 
     @Override
@@ -512,27 +573,7 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
-    public void setCameraIdPref(int cameraId) {
-
-    }
-
-    @Override
-    public void setFlashPref(String flash_value) {
-
-    }
-
-    @Override
     public void setFocusPref(String focus_value, boolean is_video) {
-
-    }
-
-    @Override
-    public void setVideoPref(boolean is_video) {
-
-    }
-
-    @Override
-    public void setSceneModePref(String scene_mode) {
 
     }
 
@@ -542,17 +583,7 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
-    public void setColorEffectPref(String color_effect) {
-
-    }
-
-    @Override
     public void clearColorEffectPref() {
-
-    }
-
-    @Override
-    public void setWhiteBalancePref(String white_balance) {
 
     }
 
@@ -562,22 +593,7 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
     }
 
     @Override
-    public void setWhiteBalanceTemperaturePref(int white_balance_temperature) {
-
-    }
-
-    @Override
-    public void setISOPref(String iso) {
-
-    }
-
-    @Override
     public void clearISOPref() {
-
-    }
-
-    @Override
-    public void setExposureCompensationPref(int exposure) {
 
     }
 
@@ -588,21 +604,6 @@ public abstract class BasicApplicationInterface implements ApplicationInterface 
 
     @Override
     public void setCameraResolutionPref(int width, int height) {
-
-    }
-
-    @Override
-    public void setVideoQualityPref(String video_quality) {
-
-    }
-
-    @Override
-    public void setZoomPref(int zoom) {
-
-    }
-
-    @Override
-    public void setExposureTimePref(long exposure_time) {
 
     }
 

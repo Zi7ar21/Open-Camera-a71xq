@@ -72,7 +72,7 @@
         <item>なし</item>
         <item>タッチ</item>
         <item>ダブルタップ</item>
-        </string-array>
+    </string-array>
     <string-array name="preference_touch_capture_values">
         <item>none</item>
         <item>single</item>
@@ -86,7 +86,7 @@
         <item>傾き補正のオン/オフ</item>
         <item>音量の変更</item>
         <item>なし</item>
-        </string-array>
+    </string-array>
     <string-array name="preference_volume_keys_values">
         <item>volume_take_photo</item>
         <item>volume_focus</item>
@@ -99,7 +99,7 @@
     <string-array name="preference_rotate_preview_entries">
         <item>回転しない</item>
         <item>180度回転</item>
-        </string-array>
+    </string-array>
     <string-array name="preference_rotate_preview_values">
         <item>0</item>
         <item>180</item>

@@ -8,9 +8,10 @@ import androidx.annotation.NonNull;
 
 import net.sourceforge.opencamera.MyDebug;
 
-/** This is essentially similar to CamcorderProfile in that it encapsulates a set of video settings
-     *  to be passed to MediaRecorder, but allows us to store additional fields.
-     */
+/**
+ * This is essentially similar to CamcorderProfile in that it encapsulates a set of video settings
+ * to be passed to MediaRecorder, but allows us to store additional fields.
+ */
 public class VideoProfile {
     private static final String TAG = "VideoProfile";
 
@@ -33,7 +34,8 @@ public class VideoProfile {
     public int videoFrameHeight;
     public int videoFrameWidth;
 
-    /** Returns a dummy video profile, used if video isn't supported.
+    /**
+     * Returns a dummy video profile, used if video isn't supported.
      */
     VideoProfile() {
     }
@@ -79,10 +81,10 @@ public class VideoProfile {
      * Copies the fields of this profile to a MediaRecorder instance.
      */
     public void copyToMediaRecorder(MediaRecorder media_recorder) {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "copyToMediaRecorder: " + media_recorder);
-        if( record_audio ) {
-            if( MyDebug.LOG )
+        if (record_audio) {
+            if (MyDebug.LOG)
                 Log.d(TAG, "record audio");
             media_recorder.setAudioSource(this.audioSource);
         }
@@ -92,21 +94,21 @@ public class VideoProfile {
         media_recorder.setOutputFormat(this.fileFormat);
         media_recorder.setVideoFrameRate(this.videoFrameRate);
         // it's probably safe to always call setCaptureRate, but to be safe (and keep compatibility with old Open Camera versions), we only do so when needed
-        if( this.videoCaptureRate != (double)this.videoFrameRate ) {
-            if( MyDebug.LOG )
+        if (this.videoCaptureRate != (double) this.videoFrameRate) {
+            if (MyDebug.LOG)
                 Log.d(TAG, "set capture rate");
             media_recorder.setCaptureRate(this.videoCaptureRate);
         }
         media_recorder.setVideoSize(this.videoFrameWidth, this.videoFrameHeight);
         media_recorder.setVideoEncodingBitRate(this.videoBitRate);
         media_recorder.setVideoEncoder(this.videoCodec);
-        if( record_audio ) {
+        if (record_audio) {
             media_recorder.setAudioEncodingBitRate(this.audioBitRate);
             media_recorder.setAudioChannels(this.audioChannels);
             media_recorder.setAudioSamplingRate(this.audioSampleRate);
             media_recorder.setAudioEncoder(this.audioCodec);
         }
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "done: " + media_recorder);
     }
 }

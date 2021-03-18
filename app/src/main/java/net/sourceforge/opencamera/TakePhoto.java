@@ -5,9 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
-/** Entry Activity for the "take photo" widget (see MyWidgetProviderTakePhoto).
- *  This redirects to MainActivity, but uses an intent extra/bundle to pass the
- *  "take photo" request.
+/**
+ * Entry Activity for the "take photo" widget (see MyWidgetProviderTakePhoto).
+ * This redirects to MainActivity, but uses an intent extra/bundle to pass the
+ * "take photo" request.
  */
 public class TakePhoto extends Activity {
     private static final String TAG = "TakePhoto";
@@ -19,7 +20,7 @@ public class TakePhoto extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
@@ -28,13 +29,13 @@ public class TakePhoto extends Activity {
         //intent.putExtra(TAKE_PHOTO, true);
         TakePhoto.TAKE_PHOTO = true;
         this.startActivity(intent);
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "finish");
         this.finish();
     }
 
     protected void onResume() {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "onResume");
         super.onResume();
     }

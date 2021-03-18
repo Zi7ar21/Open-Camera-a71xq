@@ -1,6 +1,7 @@
 package net.sourceforge.opencamera;
 
-/** Exception for HDRProcessor class.
+/**
+ * Exception for HDRProcessor class.
  */
 @SuppressWarnings("WeakerAccess")
 public class HDRProcessorException extends Exception {
